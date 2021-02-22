@@ -443,10 +443,3 @@ function Get-Filter {
     return $filter
 }
 
-#TODO get orphaned computers e.g 10.85.192.86
-#TODO get OU properly
-#TODO fix header
-#TODO enable sorting
-#TODO pagination for larger queries?
-#TODO check csv output
-#TODO fix memory leak
