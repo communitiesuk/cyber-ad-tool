@@ -17,11 +17,11 @@ $(document).ready(function () {
 	
 	$.ajax({
 		type: "GET",
-		url: "http://localhost:8080/getOu/domain",
+		url: "getOu/domain",
 		dataType: "json",
 		success: function (result, status, xhr) {
 			if (result["computers"] == "null") {
-				window.location.replace("http://localhost:8080");
+				window.location.replace("/");
 			}
 			
 			
@@ -57,11 +57,11 @@ $(document).ready(function () {
 		
 		$.ajax({
 			type: "GET",
-			url: "http://localhost:8080/report/gpo/" + $("#reportSelect").val() + "/" + $("#daysSelect").val(),
+			url: "report/gpo/" + $("#reportSelect").val() + "/" + $("#daysSelect").val(),
 			dataType: "json",
 			success: function (result, status, xhr) {
 				if (result["computers"] == "null") {
-					window.location.replace("http://localhost:8080");
+					window.location.replace("/");
 				} 
 					
 				
@@ -167,29 +167,29 @@ $(document).ready(function () {
       </a>
     </div>
     <div class="govuk-header__content">
-      <a href="http://localhost:8080" class="govuk-header__link govuk-header__link--service-name">
+      <a href="/" class="govuk-header__link govuk-header__link--service-name">
         Active Directory Reporting Tool
       </a>
       <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide navigation menu">Menu</button>
       <nav>
         <ul id="navigation" class="govuk-header__navigation " aria-label="Navigation menu">
           <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="http://localhost:8080/groups">
+            <a class="govuk-header__link" href="groups">
               Group Reports
             </a>
           </li>
           <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="http://localhost:8080/reports">
+            <a class="govuk-header__link" href="reports">
               User Reports
             </a>
           </li>
           <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="http://localhost:8080/computers">
+            <a class="govuk-header__link" href="computers">
               Computer Reports
             </a>
           </li>
 		  <li class="govuk-header__navigation-item govuk-header__navigation-item--active">
-            <a class="govuk-header__link" href="http://localhost:8080/gpo">
+            <a class="govuk-header__link" href="gpo">
               Group Policy Reports
             </a>
           </li>

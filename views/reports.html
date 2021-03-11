@@ -15,7 +15,7 @@ $(document).ready(function () {
 	$("#loading").hide();
 	
     $("#reportSelect").change(function (e) {
-		var reports = ['All Users', 'Users Never Logged On', 'Locked Out Users', 'Disabled Users','Account Expired Users','Members of Domain Local Administrators Group','Members of Domain Admins Group'];
+		var reports = ['All Users', 'Users Never Logged On', 'Locked Out Users', 'Disabled Users','Account Expired Users','Members of Domain Local Administrators Group','Members of Domain Admins Group','Users in more than one group','Users with logon script','Users without logon script','Disabled users','Account never expires users','Dial in allowed users'];
 
 		if (reports.indexOf($("#reportSelect").val()) !== -1) {
 			$("#daysFilter").hide();
@@ -30,11 +30,11 @@ $(document).ready(function () {
 		
 		$.ajax({
 			type: "GET",
-			url: "http://localhost:8080/report/" + $("#reportSelect").val() + "/" + $("#daysSelect").val(),
+			url: "report/" + $("#reportSelect").val() + "/" + $("#daysSelect").val(),
 			dataType: "json",
 			success: function (result, status, xhr) {
 				if (result["users"] == "null") {
-					window.location.replace("http://localhost:8080");
+					window.location.replace("/");
 				} 
 					
 				
@@ -150,29 +150,29 @@ $(document).ready(function () {
       </a>
     </div>
     <div class="govuk-header__content">
-      <a href="http://localhost:8080" class="govuk-header__link govuk-header__link--service-name">
+      <a href="/" class="govuk-header__link govuk-header__link--service-name">
         Active Directory Reporting Tool
       </a>
       <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide navigation menu">Menu</button>
       <nav>
         <ul id="navigation" class="govuk-header__navigation " aria-label="Navigation menu">
           <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="http://localhost:8080/groups">
+            <a class="govuk-header__link" href="groups">
               Group Reports
             </a>
           </li>
           <li class="govuk-header__navigation-item govuk-header__navigation-item--active">
-            <a class="govuk-header__link" href="http://localhost:8080/reports">
+            <a class="govuk-header__link" href="reports">
               User Reports
             </a>
           </li>
           <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="http://localhost:8080/computers">
+            <a class="govuk-header__link" href="computers">
               Computer Reports
             </a>
           </li>
 		  <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="http://localhost:8080/gpo">
+            <a class="govuk-header__link" href="gpo">
               Group Policy Reports
             </a>
           </li>
@@ -186,7 +186,7 @@ $(document).ready(function () {
 <div class="govuk-breadcrumbs">
   <ol class="govuk-breadcrumbs__list">
     <li class="govuk-breadcrumbs__list-item">
-      <a class="govuk-breadcrumbs__link" href="http://localhost:8080">Home</a>
+      <a class="govuk-breadcrumbs__link" href="/">Home</a>
     </li>
     <li class="govuk-breadcrumbs__list-item">
       <a class="govuk-breadcrumbs__link" href="#">User Reports</a>
@@ -212,8 +212,15 @@ $(document).ready(function () {
 	<option value="Soon-to-expire User Accounts">Soon-to-expire User Accounts</option>
 	<option value="Members of Domain Local Administrators Group">Members of Domain Local Administrators Group</option>
 	<option value="Members of Domain Admins Group">Members of Domain Admins Group</option>
-	
-
+	<option value="Users in more than one group">Users in more than one group</option>
+	<option value="Recently deleted users">Recently deleted users</option>
+	<option value="Recently modified users">Recently modified users</option>
+	<option value="Users with logon script">Users with logon script</option>
+	<option value="Users without logon script">Users without logon script</option>
+	<option value="Account never expires users">Account never expires users</option>
+	<option value="Recently logged on users">Recently logged on users</option>
+	<option value="Dial in allowed users">Dial in allowed users</option>
+	<option value="Logon hours based report">Logon hours based report</option>
   </select>
 </div>
 
@@ -221,7 +228,7 @@ $(document).ready(function () {
   <label class="govuk-label" for="width-3">
     Days to filter on
   </label>
-  <input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="90">
+  <input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="30">
  </div>
 
 <button id="runReport" class="govuk-button" data-module="govuk-button">

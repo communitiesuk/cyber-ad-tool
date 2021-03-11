@@ -13,6 +13,8 @@ Git, in order to clone the repository
 
 A modern browser such as Chrome or Firefox
 
+Powershell 5 or above
+
 
 
 ### Starting the application
@@ -25,6 +27,42 @@ When prompted select Y
 ### Stopping the application
 
 Close the powershell window
+
+### Reports available
+
+The following reports are available: 
+
+| Name          | Type              | Filter by |
+| :------------- |:-----------------|:---------
+| All Users	         | User            |  |
+| Users Never Logged On		         | User            |  |
+| Users Not Logged On for nn days		         | User            |Days  |
+| Locked Out Users		         | User            |  |
+| Disabled Users		         | User            |  |
+| Recently Created Users	         | User            | Days |	
+| Account Expired Users		         | User            |  |
+| Soon-to-expire User Accounts		         | User            |Days  |
+| Members of Domain Local Administrators Group		         | User            |  |
+| Members of Domain Admins Group	         | User            |  |	
+| Users in more than one group		         | User            |  |
+| Recently deleted users		         | User            | Days |
+| Recently modified users		         | User            | Days |
+| Users with logon script		         | User            |  |
+| Users without logon script	         | User            |  |	
+| Account never expires users	         | User            |  |	
+| Recently logged on users		         | User            | Days |
+| Dial in allowed users		         | User            |  |
+| Logon hours based report	         | User            |  |
+|         |            |  |	
+| All Computers	         | Computer            |  |
+| Recently Created Computers	         | Computer            | OU, Days |
+| Computers Not Recently Logged On	         | Computer            | OU, Days |
+|         |            |  |
+| Domain Local	         | Group            |  |
+| Global	         | Group            |  |
+|         |            |  |
+| All GPOs		         | GPO            |  |
+| Recently Created GPOs	         | GPO            | Days |
 
 
 ## Architecture
@@ -46,7 +84,9 @@ The main components of the application are as follows:
 | adaudit.bat   | bash script       | wrapper scrript to start the application |
 | views/index.html         | html file            | Landing view containing login screen and Domain selection |
 | views/groups.html         | html file           | Group selection and membership view |
-
+| views/computers.html         | html file           | Computer reports |
+| views/reports.html         | html file           | User reports |
+| views/gpo.html         | html file           | Group Policy reports |
 
 
 ### To add another view

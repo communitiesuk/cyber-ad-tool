@@ -6,7 +6,6 @@ Install-Module -Name Pode
 Import-Module -Name 'Pode'
 Import-Module ActiveDirectory
 
-
 Start-PodeServer {
 	New-PodeLoggingMethod -Terminal | Enable-PodeRequestLogging
 	New-PodeLoggingMethod -Terminal | Enable-PodeErrorLogging
@@ -14,6 +13,8 @@ Start-PodeServer {
     Add-PodeEndpoint -Address * -Port 8080 -Protocol Http
 
     Add-PodeRoute -Method Get -Path '/' -ScriptBlock {
+		Add-PodeHeader -Name Access-Control-Allow-Origin -Value *
+		Add-PodeHeader -Name Access-Control-Allow-Credentials -Value true
         Write-PodeViewResponse -Path 'index'
     }
 
@@ -37,8 +38,11 @@ Start-PodeServer {
         Write-PodeViewResponse -Path 'header'
     }
 	
-	Add-PodeRoute -Method Get -Path '/login/:username/:password/:hostname' -ScriptBlock {
 	
+
+	Add-PodeRoute -Method Get -Path '/login/:username/:password/:hostname' -ScriptBlock {
+		Add-PodeHeader -Name Access-Control-Allow-Origin -Value *
+		Add-PodeHeader -Name Access-Control-Allow-Credentials -Value true
 		$username = $WebEvent.Parameters['username']
 		$password = ConvertTo-SecureString $WebEvent.Parameters['password'] -AsPlainText -Force
 		$psCred = New-Object System.Management.Automation.PSCredential -ArgumentList ($username, $password)
@@ -188,8 +192,8 @@ Start-PodeServer {
 				    
                     $MembersOfList=""
                     $GroupMembership = Get-ADPrincipalGroupMembership -Identity $user -Credential $psCred -Server $hostname
-					    foreach ($parentgroup in $GroupMembership) {
-					#	    
+					foreach ($parentgroup in $GroupMembership) {
+						    
 						    $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
 				    }
                 
@@ -414,6 +418,8 @@ function Get-Filter {
 
     $daysOffset = (get-date).adddays(-$days)
 
+    Write-Host "Days Offset is  $daysOffset"
+
     $filter = switch ($report)
     {
         "All Users" {Get-ADUser -properties * -Filter * -Credential $psCred -Server $hostname}
@@ -427,19 +433,30 @@ function Get-Filter {
                                         Get-ADUser -properties * -Filter 'AccountExpirationDate -le $daysOffset' -Credential $psCred -Server $hostname}
         "Members of Domain Local Administrators Group" {Get-ADGroupMember  "Administrators" -Credential $psCred -Server $hostname | Where { $_.objectClass -eq "user" }}
         "Members of Domain Admins Group" {Get-ADGroupMember  "Domain Admins" -Credential $psCred -Server $hostname | Where { $_.objectClass -eq "user" }}
+        "Users in more than one group" {Get-ADUser -Filter * -Properties * -Credential $psCred -Server $hostname | Where  { $_.memberOf.count -gt 1 }}
+        "Recently deleted users" {Get-ADObject -IncludeDeletedObjects -properties * -Filter {objectClass -eq "user"} -Credential $psCred -Server $hostname} #TODO need to fix
+        "Recently modified users" {Get-ADUser -properties * -Filter 'modified -ge $daysOffset' -Credential $psCred -Server $hostname}
+        "Users with logon script" {Get-ADUser -Filter * -Properties * -Credential $psCred -Server $hostname | Where  { $_.scriptPath.length -gt 0 }}
+        "Users without logon script" {Get-ADUser -Filter * -Properties * -Credential $psCred -Server $hostname | Where  { $_.scriptPath.length -eq 0 }}
+        "Account never expires users" {Get-ADUser -Filter * -Properties * -Credential $psCred -Server $hostname | Where  { $_.accountExpirationDate.length -eq 0 }}
+        "Recently logged on users" {Get-ADUser -properties * -Filter 'lastLogondate -ge $daysOffset' -Credential $psCred -Server $hostname}
+        "Dial in allowed users" {Get-ADUser -properties * -Filter *  -Credential $psCred -Server $hostname | Where  {$_.msNPAllowDialin -eq $true}}
+        "Logon hours based report" {Get-ADUser -properties * -Filter * -Credential $psCred -Server $hostname}
         "All Computers" {Get-ADComputer -properties * -Filter * -SearchBase $searchBase -Credential $psCred -Server $hostname}
         "Computers Not Recently Logged On" {Get-ADComputer -properties * -Filter {LastLogonTimeStamp -lt $daysOffset} -SearchBase $searchBase -Credential $psCred -Server $hostname}
         "Recently Created Computers" {Get-ADComputer -properties * -Filter 'created -ge $daysOffset' -Credential $psCred -Server $hostname}
         "All GPOs" {Invoke-Command -Credential $psCred  -ComputerName localhost -ScriptBlock{Get-GPO -All -Server $hostname} }
-
-       
     }
-
-    
-
 
     Write-Host "Filter : $filter"
 
     return $filter
 }
 
+#TODO get orphaned computers e.g 10.85.192.86
+#TODO get OU properly
+#TODO fix header
+#TODO enable sorting
+#TODO pagination for larger queries?
+#TODO check csv output
+#TODO fix memory leak
