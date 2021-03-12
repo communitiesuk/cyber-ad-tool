@@ -52,7 +52,6 @@ The following reports are available:
 | Account never expires users	         | User            |  |	
 | Recently logged on users		         | User            | Days |
 | Dial in allowed users		         | User            |  |
-
 |         |            |  |	
 | All Computers	         | Computer            |  |
 | Recently Created Computers	         | Computer            | OU, Days |
