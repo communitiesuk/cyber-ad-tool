@@ -424,7 +424,8 @@ function Get-Filter {
     {
         "All Users" {Get-ADUser -properties * -Filter * -Credential $psCred -Server $hostname}
         "Users Never Logged On" {Get-ADUser -properties * -Filter '-not ( lastlogontimestamp -like "*")' -Credential $psCred -Server $hostname}
-        "Users Not Recently Logged On" {Get-ADUser -properties * -Filter "lastlogondate -notlike '*' -OR lastlogondate -le $days" -Credential $psCred -Server $hostname}
+        "Users Not Recently Logged On" {Get-ADUser -properties * -Filter 'lastlogondate -notlike "*" -OR lastlogondate -le $daysOffset' -Credential $psCred -Server $hostname}
+
         "Locked Out Users" {Search-ADAccount –LockedOut -Credential $psCred -Server $hostname}
         "Disabled Users" {Search-ADAccount -AccountDisabled -Credential $psCred -Server $hostname}
         "Recently Created Users" {Get-ADUser -properties * -Filter 'created -ge $daysOffset' -Credential $psCred -Server $hostname}
@@ -452,11 +453,3 @@ function Get-Filter {
 
     return $filter
 }
-
-#TODO get orphaned computers e.g 10.85.192.86
-#TODO get OU properly
-#TODO fix header
-#TODO enable sorting
-#TODO pagination for larger queries?
-#TODO check csv output
-#TODO fix memory leak
