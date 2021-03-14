@@ -15,7 +15,7 @@ $(document).ready(function () {
 	$("#loading").hide();
 	
     $("#reportSelect").change(function (e) {
-		var reports = ['All Users', 'Users Never Logged On', 'Locked Out Users', 'Disabled Users','Account Expired Users','Members of Domain Local Administrators Group','Members of Domain Admins Group','Users in more than one group','Users with logon script','Users without logon script','Disabled users','Account never expires users','Dial in allowed users'];
+		var reports = ['All Users', 'Users Never Logged On', 'Locked Out Users', 'Disabled Users','Account Expired Users','Members of Domain Local Administrators Group','Members of Domain Admins Group','Users in more than one group','Users with logon script','Users without logon script','Disabled users','Account never expires users','Dial in allowed users','Users with non restricted logon times','Admin users with expired passwords'];
 
 		if (reports.indexOf($("#reportSelect").val()) !== -1) {
 			$("#daysFilter").hide();
@@ -47,14 +47,19 @@ $(document).ready(function () {
 				t+='<tr class="govuk-table__row">';
 				t+='<th scope="col" class="govuk-table__header">Name</th>';
 				t+='<th scope="col" class="govuk-table__header">Last Logon</th>';
+				t+='<th scope="col" class="govuk-table__header">Disable</th>';
 				t+='</tr></thead>';
 				
 				var userDetails = ["Username","distinguishedName","objectGuid","badLogonCount","created","deleted","enabled","lockedOut","passwordLastSet","passwordExpired","passwordNeverExpires","Last Logon","Membe of"];
 				data.push(userDetails);
-					
-				for (i = 0; i < result["users"].length; i++) {
+				var userId="";
+				userCount = result["users"].length;
+				
+				
+				for (i = 0; i < userCount; i++) {
+					userId="userID" + i;
 					var userName=result["users"][i]["Username"];
-					console.log("User=" + userName);
+					//console.log("User=" + userName + " : " + userId);
 					logon=parseDate(result["users"][i]["LastLogonDate"])
 					var username = result["users"][i]["Username"];
 					var memberOf = result["users"][i]["MemberOf"];
@@ -70,6 +75,8 @@ $(document).ready(function () {
 					var passwordExpired = result["users"][i]["PasswordExpired"];
 					var passwordNeverExpires = result["users"][i]["PasswordNeverExpires"];
 					var accountExpirationDate = result["users"][i]["AccountExpirationDate"];
+					
+					var SamAccountName = result["users"][i]["SamAccountName"];
 					
 					t+='<tr class="govuk-table__row">';
 					t+="<td class='govuk-table__cell'>";
@@ -97,6 +104,7 @@ $(document).ready(function () {
 					t+='</div>';
 					t+='</details>';
 					t+="</td><td class='govuk-table__cell'>" + logon + "</td>";
+					t+="</td><td class='govuk-table__cell'><div class='govuk-checkboxes'><div class='govuk-checkboxes__item'><input class='govuk-checkboxes__input' type ='checkbox' id=" + userId + " name=" + userId + " value='" + SamAccountName +"'><label class='govuk-label govuk-checkboxes__label' for="+ SamAccountName +"></label></td>";
 					t+='</tr>';
 					userDetails = [username,distinguishedName,objectGuid,badLogonCount,created,deleted,enabled,lockedOut,passwordLastSet,passwordExpired,passwordNeverExpires,logon,memberOf];
 					data.push(userDetails); 
@@ -107,6 +115,7 @@ $(document).ready(function () {
 				
 				csvData = data.map(e => e.join(",")).join("\n");
 				$("#saveCSVDiv").show();
+				$("#disableUsers").show();
 				$("#downloadlink").hide();
 			},
 			error: function (xhr, status, error) {
@@ -121,6 +130,35 @@ $(document).ready(function () {
 		link.href = makeTextFile(csvData);
 		$("#downloadlink").show();
 	});
+	
+	$("#disableUsers").click(function (e) {
+		var userArray = [];
+
+		for (i = 0; i < userCount; i++) {
+			userID="userID"+i;
+			
+			if($("#userID" + i).is(':checked')) {
+			    //console.log($("#userID"+i).val());
+				userArray.push($("#userID"+i).val()); 
+			} 
+		}
+			
+		userArray.forEach(function (user, index) {
+			console.log(user);
+		});
+		
+		$.ajax({
+					type: "GET",
+					url: "disableUsers/" + userArray,
+					dataType: "json",
+					success: function (result, status, xhr) {
+					
+					alert ("success");
+			}
+		});
+		
+	});
+	
     $(document).ajaxStart(function () {
         $("#loading").show();
     });
@@ -220,7 +258,8 @@ $(document).ready(function () {
 	<option value="Account never expires users">Account never expires users</option>
 	<option value="Recently logged on users">Recently logged on users</option>
 	<option value="Dial in allowed users">Dial in allowed users</option>
-	<!-- <option value="Logon hours based report">Logon hours based report</option> -->
+	<option value="Users with non restricted logon times">Users with non restricted logon times</option>
+	<option value="Admin users with expired passwords">Admin users with expired passwords</option>
   </select>
 </div>
 
@@ -245,7 +284,12 @@ $(document).ready(function () {
 <div class="govuk-form-group" id="saveCSVDiv">
 	<button id="saveCSVButton" class="govuk-button" data-module="govuk-button">Export to CSV</button>
 	<a download="report.txt" class="govuk-link" id="downloadlink">Download</a>
+	<button id="disableUsers" class="govuk-button" data-module="govuk-button">
+		Disable Selected Users
+	</button>
 </div>
+
+
    
 <div w3-include-html="footer"></div> 
 <script>includeHTML();</script>

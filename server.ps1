@@ -1,7 +1,7 @@
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-Install-WindowsFeature RSAT-AD-PowerShell
-Install-Module -Name Pode
+#[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+#Install-WindowsFeature RSAT-AD-PowerShell
+#Install-Module -Name Pode
 
 Import-Module -Name 'Pode'
 Import-Module ActiveDirectory
@@ -57,6 +57,29 @@ Start-PodeServer {
 		Write-PodeJsonResponse -Value @{ 'forest' = $forest }
     }
 	
+    Add-PodeRoute -Method Get -Path '/disableUsers/:userList' -ScriptBlock {
+	    if (Test-PodeCookie -Name 'password') {
+			Write-Host "cookie set"
+			$psCred = User-Auth
+            $hostname =  Get-Hostname
+
+		    $users = $WebEvent.Parameters['userList']
+		    $usersSeparated =$users.Split(",")
+		    
+		
+		    foreach($user in $usersSeparated) {
+                Write-Host "user to disable is " + $user
+                Disable-ADAccount -Identity $user
+                #TODO : grey out boxes of already disabled users, display success message, model partial success
+            }
+
+		    Write-PodeJsonResponse -Value @{ 'success' = "true" }
+
+		} else {
+			Write-Host "cookie not set"
+			Write-PodeJsonResponse -Value @{ 'success' = 'null'; }
+		}
+    }
 
     Add-PodeRoute -Method Get -Path '/getOU/:domain' -ScriptBlock {
 	    if (Test-PodeCookie -Name 'password') {
@@ -114,7 +137,7 @@ Start-PodeServer {
 			Write-Host "cookie not set"
 			Write-PodeJsonResponse -Value @{ 'groups' = 'null'; }
 		}
-		#TODO get count of users in each group and effectivev permissions. add description?
+		
     }
 	
 	Add-PodeRoute -Method Get -Path '/group/:groupName' -ScriptBlock {
@@ -211,7 +234,8 @@ Start-PodeServer {
                             PasswordLastSet=$user.PasswordLastSet;
                             PasswordExpired=$user.PasswordExpired;
                             PasswordNeverExpires=$user.PasswordNeverExpires;
-                            AccountExpirationDate=$user.AccountExpirationDate
+                            AccountExpirationDate=$user.AccountExpirationDate;
+                            SamAccountName=$user.SamAccountName
                             }
 
                      
@@ -422,7 +446,7 @@ function Get-Filter {
 
     $filter = switch ($report)
     {
-        "All Users" {Get-ADUser -properties * -Filter * -Credential $psCred -Server $hostname}
+        "All Users" {Get-ADUser -properties * -Filter * -Credential $psCred -Server $hostname | sort-object name}
         "Users Never Logged On" {Get-ADUser -properties * -Filter '-not ( lastlogontimestamp -like "*")' -Credential $psCred -Server $hostname}
         "Users Not Recently Logged On" {Get-ADUser -properties * -Filter 'lastlogondate -notlike "*" -OR lastlogondate -le $daysOffset' -Credential $psCred -Server $hostname}
 
@@ -442,7 +466,10 @@ function Get-Filter {
         "Account never expires users" {Get-ADUser -Filter * -Properties * -Credential $psCred -Server $hostname | Where  { $_.accountExpirationDate.length -eq 0 }}
         "Recently logged on users" {Get-ADUser -properties * -Filter 'lastLogondate -ge $daysOffset' -Credential $psCred -Server $hostname}
         "Dial in allowed users" {Get-ADUser -properties * -Filter *  -Credential $psCred -Server $hostname | Where  {$_.msNPAllowDialin -eq $true}}
-        "Logon hours based report" {Get-ADUser -properties * -Filter * -Credential $psCred -Server $hostname}
+        "Users with non restricted logon times" {Get-ADUser -properties logonHours  -Filter *  -Credential $psCred -Server $hostname | Where  {$_.logonHours -eq $null}}
+
+        "Admin users with expired passwords" {get-ADGroup -Credential $psCred -Server $hostname -Filter "Name -like '*Admin*'"  | Get-ADGroupMember -Credential $psCred -Server $hostname | where { $_.objectClass -eq "user"} | Get-ADUser -properties PasswordExpired -Credential $psCred -Server $hostname | where { $_.PasswordExpired -ne $false } | sort-object -unique name}
+
         "All Computers" {Get-ADComputer -properties * -Filter * -SearchBase $searchBase -Credential $psCred -Server $hostname}
         "Computers Not Recently Logged On" {Get-ADComputer -properties * -Filter {LastLogonTimeStamp -lt $daysOffset} -SearchBase $searchBase -Credential $psCred -Server $hostname}
         "Recently Created Computers" {Get-ADComputer -properties * -Filter 'created -ge $daysOffset' -Credential $psCred -Server $hostname}
