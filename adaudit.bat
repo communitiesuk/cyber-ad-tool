@@ -1,0 +1,1 @@
+runas /profile /user:Administrator "powershell ./server.ps1"
