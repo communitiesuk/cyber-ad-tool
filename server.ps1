@@ -37,6 +37,9 @@ Start-PodeServer {
     Add-PodeRoute -Method Get -Path '/header' -ScriptBlock {
         Write-PodeViewResponse -Path 'header'
     }
+    Add-PodeRoute -Method Get -Path '/scheduling' -ScriptBlock {
+        Write-PodeViewResponse -Path 'scheduling'
+    }
 	
 	
 

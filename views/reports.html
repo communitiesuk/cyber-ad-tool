@@ -47,7 +47,7 @@ $(document).ready(function () {
 				t+='<tr class="govuk-table__row">';
 				t+='<th scope="col" class="govuk-table__header">Name</th>';
 				t+='<th scope="col" class="govuk-table__header">Last Logon</th>';
-				t+='<th scope="col" class="govuk-table__header">Disable</th>';
+				//t+='<th scope="col" class="govuk-table__header">Disable</th>';
 				t+='</tr></thead>';
 				
 				var userDetails = ["Username","distinguishedName","objectGuid","badLogonCount","created","deleted","enabled","lockedOut","passwordLastSet","passwordExpired","passwordNeverExpires","Last Logon","Membe of"];
@@ -59,7 +59,6 @@ $(document).ready(function () {
 				for (i = 0; i < userCount; i++) {
 					userId="userID" + i;
 					var userName=result["users"][i]["Username"];
-					//console.log("User=" + userName + " : " + userId);
 					logon=parseDate(result["users"][i]["LastLogonDate"])
 					var username = result["users"][i]["Username"];
 					var memberOf = result["users"][i]["MemberOf"];
@@ -104,7 +103,7 @@ $(document).ready(function () {
 					t+='</div>';
 					t+='</details>';
 					t+="</td><td class='govuk-table__cell'>" + logon + "</td>";
-					t+="</td><td class='govuk-table__cell'><div class='govuk-checkboxes'><div class='govuk-checkboxes__item'><input class='govuk-checkboxes__input' type ='checkbox' id=" + userId + " name=" + userId + " value='" + SamAccountName +"'><label class='govuk-label govuk-checkboxes__label' for="+ SamAccountName +"></label></td>";
+					//t+="</td><td class='govuk-table__cell'><div class='govuk-checkboxes'><div class='govuk-checkboxes__item'><input class='govuk-checkboxes__input' type ='checkbox' id=" + userId + " name=" + userId + " value='" + SamAccountName +"'><label class='govuk-label govuk-checkboxes__label' for="+ SamAccountName +"></label></td>";
 					t+='</tr>';
 					userDetails = [username,distinguishedName,objectGuid,badLogonCount,created,deleted,enabled,lockedOut,passwordLastSet,passwordExpired,passwordNeverExpires,logon,memberOf];
 					data.push(userDetails); 
@@ -115,7 +114,7 @@ $(document).ready(function () {
 				
 				csvData = data.map(e => e.join(",")).join("\n");
 				$("#saveCSVDiv").show();
-				$("#disableUsers").show();
+				//$("#disableUsers").show();
 				$("#downloadlink").hide();
 			},
 			error: function (xhr, status, error) {
@@ -284,9 +283,9 @@ $(document).ready(function () {
 <div class="govuk-form-group" id="saveCSVDiv">
 	<button id="saveCSVButton" class="govuk-button" data-module="govuk-button">Export to CSV</button>
 	<a download="report.txt" class="govuk-link" id="downloadlink">Download</a>
-	<button id="disableUsers" class="govuk-button" data-module="govuk-button">
+	<!--<button id="disableUsers" class="govuk-button" data-module="govuk-button">
 		Disable Selected Users
-	</button>
+	</button> -->
 </div>
 
 
