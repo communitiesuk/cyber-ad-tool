@@ -52,7 +52,12 @@ Start-PodeServer {
 		$hostname = $WebEvent.Parameters['hostname']
 		
 		Set-PodeCookie -Name 'username' -Value $username
-		Set-PodeCookie -Name 'password' -Value $WebEvent.Parameters['password'] -Secret 'hunter2' -Duration 6000 -Discard
+
+        $password = $WebEvent.Parameters['password']
+        $securepass = ConvertTo-SecureString $password -AsPlainText -Force
+        $encryptedpass = ConvertFrom-SecureString -SecureString $securepass
+
+        Set-PodeCookie -Name 'password' -Value  $encryptedpass  -Duration 6000 -Discard
 		Set-PodeCookie -Name 'hostname' -Value $hostname
 
 		$domain=Get-ADDomain -Credential $psCred
@@ -60,9 +65,95 @@ Start-PodeServer {
 		Write-PodeJsonResponse -Value @{ 'forest' = $forest }
     }
 	
+    Add-PodeRoute -Method Get -Path '/scheduleReport/:reportName/:daysSelect/:fromEmailAddress/:emailRecipients/:frequency/:smtpserver' -ScriptBlock { 
+	    if (Test-PodeCookie -Name 'password') {
+
+			$psCred = User-Auth
+
+            
+            $user=Get-PodeCookie -Name 'username' -Raw
+	        $pwd=Get-PodeCookie -Name 'password' -Raw
+	        $host=Get-PodeCookie -Name 'hostname' -Raw
+            $pass = ConvertTo-SecureString $pwd.Value -AsPlainText -Force
+            $password = $pwd.Value
+
+            $hostname =  Get-Hostname
+            $reportname = $WebEvent.Parameters['reportName']
+
+            New-Item -Path "C:\reports" -Name "setCreds.ps1" -ItemType "file" -Force -Value "
+#`$password=$password #todo read from cookie
+#`$securepass = ConvertTo-SecureString `$password -AsPlainText -Force
+#ConvertFrom-SecureString -SecureString `$securepass | set-content 'C:\reports\password.txt'
+New-Item -Path 'C:\reports' -Name 'password.txt' -ItemType 'file' -Force -Value $password
+            "
+            
+
+		    $reportName = $WebEvent.Parameters['reportName']
+            $reportNameTrimmed = $reportName.replace(' ','')
+		    
+            New-Item -Path "C:\reports" -Name "$reportNameTrimmed.ps1" -ItemType "file" -Force -Value "
+[System.Uri]`$Uri = 'http://localhost:8080/report/$reportName/90' # Add the Uri 
+`$Cookie = New-Object System.Net.Cookie
+`$Cookie.Name = 'username' # Add the name of the cookie
+`$Cookie.Value = 'robbrooks' # Add the value of the cookie
+`$Cookie.Domain = `$uri.DnsSafeHost
+
+`$securepass = Get-Content 'C:\reports\password.txt' | ConvertTo-SecureString 
+`$encryptedpass = ConvertFrom-SecureString -SecureString `$securepass
+
+
+
+`$Cookie2 = New-Object System.Net.Cookie
+`$Cookie2.Name = 'password' # Add the name of the cookie
+`$Cookie2.Value = `$encryptedpass # Add the value of the cookie
+`$Cookie2.Domain = `$uri.DnsSafeHost
+
+`$Cookie3 = New-Object System.Net.Cookie
+`$Cookie3.Name = 'hostname' # Add the name of the cookie
+`$Cookie3.Value = '10.85.192.39' # Add the value of the cookie
+`$Cookie3.Domain = `$uri.DnsSafeHost
+
+`$WebSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+`$WebSession.Cookies.Add(`$Cookie)
+`$WebSession.Cookies.Add(`$Cookie2)
+`$WebSession.Cookies.Add(`$Cookie3)
+
+
+`$props = @{
+    Uri         = `$uri.AbsoluteUri
+    WebSession  = `$WebSession
+}
+
+`$users = Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users 
+Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users | Export-Csv -Path C:\reports\$reportNameTrimmed.csv
+#Send-MailMessage -From 'User01 <robertbrooks334@test.local>' -To 'User02 <robertbrooks334@gmail.com>' -Subject '$reportNameTrimmed' -SmtpServer 192.168.100.177
+"
+            
+            $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\$reportNameTrimmed.ps1
+            $trigger = New-ScheduledTaskTrigger -Daily -At 5:08pm
+            $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+            Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskPath "ADReportingTasks" -TaskName "$reportNameTrimmed" -Description "This task calls the $reportName report"
+
+
+            $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\setCreds.ps1
+            $trigger = New-ScheduledTaskTrigger -Daily -At 5:07pm
+            $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+            Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskPath "ADReportingTasks" -TaskName "setCreds" -Description "This task sets creds"
+            
+
+		    Write-PodeJsonResponse -Value @{ 'success' = "true" }
+
+		} else {
+			Write-Host "cookie not set"
+			Write-PodeJsonResponse -Value @{ 'success' = 'null'; }
+		}
+    }
+    
     Add-PodeRoute -Method Get -Path '/disableUsers/:userList' -ScriptBlock {
 	    if (Test-PodeCookie -Name 'password') {
 			Write-Host "cookie set"
+            #$psCred=Get-PodeCookie -Name 'psCred' -Raw -Secret 'hunter2'
+
 			$psCred = User-Auth
             $hostname =  Get-Hostname
 
@@ -199,13 +290,22 @@ Start-PodeServer {
 	
 	Add-PodeRoute -Method Get -Path '/report/:reportName/:daysFilter' -ScriptBlock {
          if (Test-PodeCookie -Name 'password') {
-        
+            Write-Host "cookie set"
+
             $reportName = $WebEvent.Parameters['reportName']
             $daysFilter = $WebEvent.Parameters['daysFilter']
             Write-Host "REPORT NAME: " + $reportName
             $psCred = User-Auth
+            #$psCred=Get-PodeCookie -Name 'psCred' -Raw -Secret 'hunter2'
+            #$psCred=Get-PodeCookie -Name 'psCred' -Raw | New-Object System.Management.Automation.PSCredential
             $hostname =  Get-Hostname
            
+             #Write-Host "hostname : $hostname"
+             #Write-Host "$psCred : $psCred"
+
+             #Write-Host $psCred.getNetworkCredential().username
+             #Write-Host $psCred.getNetworkCredential().password
+
 
             $UserList = Get-Filter $reportName $daysFilter $psCred $hostname
 
@@ -398,15 +498,21 @@ Start-PodeServer {
 function User-Auth {
     
     $user=Get-PodeCookie -Name 'username' -Raw
-	$pwd=Get-PodeCookie -Name 'password' -Raw -Secret 'hunter2'
+	$pwd=Get-PodeCookie -Name 'password' -Raw
 	$host=Get-PodeCookie -Name 'hostname' -Raw
-				
+    $password = ConvertTo-SecureString $pwd.Value	
+    
+    Write-Host "user is : $user"
+    Write-Host "host is : $host"
+    Write-Host "pwd is : $pwd"
+    Write-Host "password is : $password"
+    	
 	$username="DOMAIN\"+$user.Value #TODO need to add domain here   logoncount
-	$pass=$pwd.Value
 	$hostname=$host.Value	
-	$password = ConvertTo-SecureString $pass -AsPlainText -Force
 			
 	$psCred = New-Object System.Management.Automation.PSCredential -ArgumentList ($username, $password)
+    Write-Host "psCred created"
+    
     return $psCred
 }
 

@@ -1,1 +1,1 @@
-runas /profile /user:Administrator "powershell ./server.ps1"
+powershell.exe -ExecutionPolicy UnRestricted -File  C:\adaudit\ad-tool-new\cyber-ad-tool\server.ps1 *> C:\reports\output.log

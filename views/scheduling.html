@@ -5,54 +5,29 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 <script src="/javascript/ad.js"></script>
 <script>
-$(document).ready(function () {
-	$("#domainSelectButton").hide();
-	$("#reportSelectButton").hide();
-	$("#computerReportSelectButton").hide();
-	$("#gpoReportSelectButton").hide();
-	
-	
+$(document).ready(function () {	
     $("#submit").click(function (e) {
         var validate = Validate();
         $("#message").html(validate);
         if (validate.length == 0) {
             $.ajax({
                 type: "GET",
-                url: "login/" + $("#username").val() + "/" + $("#password").val() + "/" + $("#hostname").val(),
+				
+				
+
+
+
+
+
+                url: "scheduleReport/" + $("#reportSelect").val()  + "/" + $("#daysSelect").val()  + "/" + $("#fromEmailAddress").val() + "/" + $("#emailRecipients").val() + "/" + $("#frequency").val() + "/" + $("#smtpserver").val(),
+				//url: "scheduleReport/All Users",  
                 dataType: "json",
                 success: function (result, status, xhr) {
-                    $("#domainSelectButton").show();
-					$("#reportSelectButton").show();
-					$("#computerReportSelectButton").show();
-					$("#gpoReportSelectButton").show();
-					$("#logon").hide();
-					var forest = result["forest"]["Name"]
-					
-					var t = '<h2 class="govuk-heading-l">Forest = ' + forest + '</h2>';
-					
-					t+='<div class="govuk-form-group">';
-					t+='<label class="govuk-label" for="sort">';
-					t+='Select a Domain';
-					t+='</label>';
-					t+='<select class="govuk-select" id="domainSelect" name="domainSelect">';
-
-					var domainCount = result["forest"]["Domains"].length
-					for (i = 0; i < domainCount; i++) {
-						domainName=result["forest"]["Domains"][i];
-						t+='<option value="' + domainName + '">' + domainName + '</option>';
-						console.log("domain name - " + domainName);
-					}
-					console.log("number of domains - " + domainCount);
-					t+='</select></div>';
-					
-					//t+='<button id="domainSelectButton" class="govuk-button" data-module="govuk-button">';
-					//t+='Choose Groups';
-					//t+='</button>';
-					
-					
-					var table = $(t);
-					$("#message").html(table);
-					
+                    
+					var t = "SUCCESS";
+					var reportData = $(t);
+					$("#status").html(reportData);	
+					alert("success");
 					
                 },
                 error: function (xhr, status, error) {
@@ -160,61 +135,89 @@ $(document).ready(function () {
     <li class="govuk-breadcrumbs__list-item">
       <a class="govuk-breadcrumbs__link" href="/">Home</a>
     </li>
-    
+    <li class="govuk-breadcrumbs__list-item">
+      <a class="govuk-breadcrumbs__link" href="#">Report Scheduling</a>
+    </li>
   </ol>
 </div>
 
-<div class="govuk-!-padding-bottom-3"></div>
+<div class="govuk-form-group">
+  <label class="govuk-label" for="reportSelect">
+    Select a report
+  </label>
+  <select class="govuk-select" id="reportSelect" name="reportSelect">
+    <option value="All Users">All Users</option>
+    <option value="Users Never Logged On" selected>Users Never Logged On</option>
+    <option value="Users Not Recently Logged On">Users Not Recently Logged On</option>
+    <option value="Locked Out Users">Locked Out Users</option>
+	<option value="Disabled Users">Disabled Users</option>
+	<option value="Recently Created Users">Recently Created Users</option>
+	<option value="Account Expired Users">Account Expired Users</option>
+	<option value="Soon-to-expire User Accounts">Soon-to-expire User Accounts</option>
+	<option value="Members of Domain Local Administrators Group">Members of Domain Local Administrators Group</option>
+	<option value="Members of Domain Admins Group">Members of Domain Admins Group</option>
+	<option value="Users in more than one group">Users in more than one group</option>
+	<option value="Recently deleted users">Recently deleted users</option>
+	<option value="Recently modified users">Recently modified users</option>
+	<option value="Users with logon scripts">Users with logon script</option>
+	<option value="Users without logon script">Users without logon script</option>
+	<option value="Account never expires users">Account never expires users</option>
+	<option value="Recently logged on users">Recently logged on users</option>
+	<option value="Dial in allowed users">Dial in allowed users</option>
+	<option value="Users with non restricted logon times">Users with non restricted logon times</option>
+	<option value="Admin users with expired passwords">Admin users with expired passwords</option>
+	<option value="All Computers">All Computers</option>
+	<option value="Computers Not Recently Logged On">Computers Not Recently Logged On</option>
+	<option value="Recently Created Computers">Recently Created Computers</option>
+	<option value="All GPOs">All GPOs</option>
+  </select>
+</div>
+
+<div id="daysFilter" class="govuk-form-group">
+  <label class="govuk-label" for="width-3">
+    Days to filter on
+  </label>
+  <input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="30">
+ </div>
+ 
+<div class="govuk-form-group">
+  <label class="govuk-label" for="fromEmailAddress">
+    From email address
+  </label>
+  <input class="govuk-input govuk-input--width-20" id="fromEmailAddress" name="fromEmailAddress" type="text"></div>
+  
+  
+<div class="govuk-form-group">
+  <label class="govuk-label" for="emailRecipients">
+    List of email recipients
+  </label>
+  <textarea class="govuk-textarea" id="emailRecipients" name="more-detail" rows="5"></textarea>
+</div>
+
+<!-- TODO use conditional checkboxes. need to check javascript-->
+
+<div class="govuk-form-group">
+  <label class="govuk-label" for="frequency">
+    Frequency
+  </label>
+  <select class="govuk-select" id="frequency" name="frequency">
+    <option value="daily">Daily</option>
+    <option value="weekly" selected>Weekly</option>
+  </select>
+</div>
 
 
-
-<div id ="logon">
-<fieldset class="govuk-fieldset">
-  <div class="govuk-form-group">
-    <label class="govuk-label" for="username">
-      Username
-    </label>
-    <input class="govuk-input govuk-input--width-10" id="username" name="username" type="text"></div>
-  <div class="govuk-form-group">
-    <label class="govuk-label" for="password">
-      Password
-    </label>
-    <input class="govuk-input govuk-input--width-10" id="password" name="password" type="password"></div>
-  <div class="govuk-form-group">
-	<label class="govuk-label" for="hostname">
-      Hostname or IP Address of Domain Controller
-    </label>
-    <input class="govuk-input govuk-input--width-10" id="hostname" name="hostnames" type="text"></div>
-</fieldset>
+<div class="govuk-form-group">
+  <label class="govuk-label" for="smtpserver">
+    SMTP Server
+  </label>
+  <input class="govuk-input govuk-input--width-20" id="smtpserver" name="smtpserver" type="text"></div>
 
 <button id="submit" class="govuk-button" data-module="govuk-button">
-  Login
-</button>
-</div>
-
-
-
-<div class="textAlignCenter">
-    <img src="~/Content/Image/loading.gif" />
-</div>
-<div id="message"></div>
-<div id="save"></div>
-
-<button id="domainSelectButton" class="govuk-button" data-module="govuk-button">
-	Groups Reports
+  Schedule Report
 </button>
 
-<button id="reportSelectButton" class="govuk-button" data-module="govuk-button">
-	User Reports
-</button>
-
-<button id="computerReportSelectButton" class="govuk-button" data-module="govuk-button">
-	Computer Reports
-</button>
-
-<button id="gpoReportSelectButton" class="govuk-button" data-module="govuk-button">
-	Group Policy Reports
-</button>
+<div id="status"></div>
 
 <div w3-include-html="footer"></div> 
 <script>includeHTML();</script>
