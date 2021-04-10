@@ -77,14 +77,24 @@ Start-PodeServer {
             $pass = ConvertTo-SecureString $pwd.Value -AsPlainText -Force
             $password = $pwd.Value
 
+            $username = $user.Value
+
             $hostname =  Get-Hostname
             $reportname = $WebEvent.Parameters['reportName']
+            $daysSelect = $WebEvent.Parameters['daysSelect']
+            $fromEmailAddress = $WebEvent.Parameters['fromEmailAddress']
+            $emailRecipients = $WebEvent.Parameters['emailRecipients']
+            $frequency = $WebEvent.Parameters['frequency']
+            $smtpserver = $WebEvent.Parameters['smtpserver']
+
+
 
             New-Item -Path "C:\reports" -Name "setCreds.ps1" -ItemType "file" -Force -Value "
-#`$password=$password #todo read from cookie
+#`$password=$password
 #`$securepass = ConvertTo-SecureString `$password -AsPlainText -Force
-#ConvertFrom-SecureString -SecureString `$securepass | set-content 'C:\reports\password.txt'
-New-Item -Path 'C:\reports' -Name 'password.txt' -ItemType 'file' -Force -Value $password
+#ConvertFrom-SecureString -SecureString `$securepass | set-content 'C:\reports\QufnrnX'
+New-Item -Path 'C:\reports' -Name 'QufnrnX' -ItemType 'file' -Force -Value $password
+(get-item C:\reports\QufnrnX).Attributes += 'Hidden'
             "
             
 
@@ -92,13 +102,13 @@ New-Item -Path 'C:\reports' -Name 'password.txt' -ItemType 'file' -Force -Value 
             $reportNameTrimmed = $reportName.replace(' ','')
 		    
             New-Item -Path "C:\reports" -Name "$reportNameTrimmed.ps1" -ItemType "file" -Force -Value "
-[System.Uri]`$Uri = 'http://localhost:8080/report/$reportName/90' # Add the Uri 
+[System.Uri]`$Uri = 'http://localhost:8080/report/$reportName/$daysSelect' # Add the Uri 
 `$Cookie = New-Object System.Net.Cookie
 `$Cookie.Name = 'username' # Add the name of the cookie
-`$Cookie.Value = 'robbrooks' # Add the value of the cookie
+`$Cookie.Value = '$username' # Add the value of the cookie
 `$Cookie.Domain = `$uri.DnsSafeHost
 
-`$securepass = Get-Content 'C:\reports\password.txt' | ConvertTo-SecureString 
+`$securepass = Get-Content 'C:\reports\QufnrnX' | ConvertTo-SecureString 
 `$encryptedpass = ConvertFrom-SecureString -SecureString `$securepass
 
 
@@ -110,7 +120,7 @@ New-Item -Path 'C:\reports' -Name 'password.txt' -ItemType 'file' -Force -Value 
 
 `$Cookie3 = New-Object System.Net.Cookie
 `$Cookie3.Name = 'hostname' # Add the name of the cookie
-`$Cookie3.Value = '10.85.192.39' # Add the value of the cookie
+`$Cookie3.Value = '$hostname' # Add the value of the cookie
 `$Cookie3.Domain = `$uri.DnsSafeHost
 
 `$WebSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
@@ -126,7 +136,7 @@ New-Item -Path 'C:\reports' -Name 'password.txt' -ItemType 'file' -Force -Value 
 
 `$users = Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users 
 Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users | Export-Csv -Path C:\reports\$reportNameTrimmed.csv
-#Send-MailMessage -From 'User01 <robertbrooks334@test.local>' -To 'User02 <robertbrooks334@gmail.com>' -Subject '$reportNameTrimmed' -SmtpServer 192.168.100.177
+#Send-MailMessage -From 'User01 <$fromEmailAddress>' -To 'User02 $emailRecipients' -Subject '$reportNameTrimmed' -SmtpServer $smtpserver  -Attachments  C:\reports\$reportNameTrimmed.csv
 "
             
             $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\$reportNameTrimmed.ps1
@@ -136,9 +146,13 @@ Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand us
 
 
             $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\setCreds.ps1
-            $trigger = New-ScheduledTaskTrigger -Daily -At 5:07pm
+            $trigger = New-ScheduledTaskTrigger -Once -At (get-date).AddSeconds(4);
+            
+            # $trigger = New-ScheduledTaskTrigger -Daily -At 5:07pm
             $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
             Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskPath "ADReportingTasks" -TaskName "setCreds" -Description "This task sets creds"
+            #Start-Sleep -s 5
+            #Unregister-ScheduledTask -TaskName setCreds -Confirm:$false #  TODO restore
             
 
 		    Write-PodeJsonResponse -Value @{ 'success' = "true" }

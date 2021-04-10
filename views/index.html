@@ -10,6 +10,7 @@ $(document).ready(function () {
 	$("#reportSelectButton").hide();
 	$("#computerReportSelectButton").hide();
 	$("#gpoReportSelectButton").hide();
+	$("#schedulingSelectButton").hide();
 	
 	
     $("#submit").click(function (e) {
@@ -25,6 +26,7 @@ $(document).ready(function () {
 					$("#reportSelectButton").show();
 					$("#computerReportSelectButton").show();
 					$("#gpoReportSelectButton").show();
+					$("#schedulingSelectButton").show();
 					$("#logon").hide();
 					var forest = result["forest"]["Name"]
 					
@@ -80,6 +82,9 @@ $(document).ready(function () {
 	$("#gpoReportSelectButton").click(function (e) {
         console.log("gpo selected");
 		window.location.replace("gpo");  
+    });
+	$("#schedulingSelectButton").click(function (e) {
+		window.location.replace("scheduling");  
     });
 	
     $(document).ajaxStart(function () {
@@ -140,7 +145,12 @@ $(document).ready(function () {
           </li>
 		  <li class="govuk-header__navigation-item">
             <a class="govuk-header__link" href="gpo">
-              Group Policy Reports
+              GPO Reports
+            </a>
+          </li>
+		  <li class="govuk-header__navigation-item">
+            <a class="govuk-header__link" href="scheduling">
+              Scheduling
             </a>
           </li>
         </ul>
@@ -209,6 +219,10 @@ $(document).ready(function () {
 
 <button id="gpoReportSelectButton" class="govuk-button" data-module="govuk-button">
 	Group Policy Reports
+</button>
+
+<button id="schedulingSelectButton" class="govuk-button" data-module="govuk-button">
+	Report Scheduling
 </button>
 
 <div w3-include-html="footer"></div> 

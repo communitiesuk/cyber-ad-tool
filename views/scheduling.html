@@ -6,19 +6,14 @@
 <script src="/javascript/ad.js"></script>
 <script>
 $(document).ready(function () {	
+	$("#status").hide();
     $("#submit").click(function (e) {
         var validate = Validate();
-        $("#message").html(validate);
+        $("#errorMessage").html(validate);
         if (validate.length == 0) {
             $.ajax({
                 type: "GET",
 				
-				
-
-
-
-
-
                 url: "scheduleReport/" + $("#reportSelect").val()  + "/" + $("#daysSelect").val()  + "/" + $("#fromEmailAddress").val() + "/" + $("#emailRecipients").val() + "/" + $("#frequency").val() + "/" + $("#smtpserver").val(),
 				//url: "scheduleReport/All Users",  
                 dataType: "json",
@@ -26,8 +21,8 @@ $(document).ready(function () {
                     
 					var t = "SUCCESS";
 					var reportData = $(t);
-					$("#status").html(reportData);	
-					alert("success");
+					//$("#status").html(reportData);	
+					$("#status").show();
 					
                 },
                 error: function (xhr, status, error) {
@@ -38,37 +33,18 @@ $(document).ready(function () {
     });
 	
 	
-	$("#domainSelectButton").click(function (e) {
-        console.log("domain selected");
-		window.location.replace("groups");  
-    });
 	
-	$("#reportSelectButton").click(function (e) {
-        console.log("reports selected");
-		window.location.replace("reports");  
-    });
-	
-	$("#computerReportSelectButton").click(function (e) {
-        console.log("reports selected");
-		window.location.replace("computers");  
-    });
-	$("#gpoReportSelectButton").click(function (e) {
-        console.log("gpo selected");
-		window.location.replace("gpo");  
-    });
-	
-    $(document).ajaxStart(function () {
-        $("img").show();
-    });
-  
-    $(document).ajaxStop(function () {
-        $("img").hide();
-    });
   
     function Validate() {
         var errorMessage = "";
-        if ($("#groupSelect").val() == "Select") {
-            errorMessage += "► Select Group";
+        if ($("#smtpserver").val() == "") {
+			errorMessage +="<span class='govuk-error-message'><span class='govuk-visually-hidden'>Error:</span>&nbsp;&nbsp;&nbsp;Please input STMP server</span>";
+        }
+		if ($("#fromEmailAddress").val() == "") {
+			errorMessage +="<span class='govuk-error-message'><span class='govuk-visually-hidden'>Error:</span>&nbsp;&nbsp;&nbsp;Please input from email address</span>";
+        }
+		if ($("#emailRecipients").val() == "") {
+			errorMessage +="<span class='govuk-error-message'><span class='govuk-visually-hidden'>Error:</span>&nbsp;&nbsp;&nbsp;Please input email recipients</span>";
         }
         return errorMessage;
     }
@@ -115,12 +91,12 @@ $(document).ready(function () {
           </li>
 		  <li class="govuk-header__navigation-item">
             <a class="govuk-header__link" href="gpo">
-              Group Policy Reports
+              GPO Reports
             </a>
           </li>
 		  <li class="govuk-header__navigation-item govuk-header__navigation-item--active">
             <a class="govuk-header__link" href="scheduling">
-              Report Scheduling
+              Scheduling
             </a>
           </li>
         </ul>
@@ -128,6 +104,9 @@ $(document).ready(function () {
     </div>
   </div>
 </header>
+
+
+
 
 
 <div class="govuk-breadcrumbs">
@@ -141,13 +120,15 @@ $(document).ready(function () {
   </ol>
 </div>
 
-<div class="govuk-form-group">
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-one-half">
+    <div class="govuk-form-group">
   <label class="govuk-label" for="reportSelect">
     Select a report
   </label>
   <select class="govuk-select" id="reportSelect" name="reportSelect">
-    <option value="All Users">All Users</option>
-    <option value="Users Never Logged On" selected>Users Never Logged On</option>
+    <option value="All Users" selected>All Users</option>
+    <option value="Users Never Logged On">Users Never Logged On</option>
     <option value="Users Not Recently Logged On">Users Not Recently Logged On</option>
     <option value="Locked Out Users">Locked Out Users</option>
 	<option value="Disabled Users">Disabled Users</option>
@@ -166,21 +147,41 @@ $(document).ready(function () {
 	<option value="Dial in allowed users">Dial in allowed users</option>
 	<option value="Users with non restricted logon times">Users with non restricted logon times</option>
 	<option value="Admin users with expired passwords">Admin users with expired passwords</option>
+	
 	<option value="All Computers">All Computers</option>
 	<option value="Computers Not Recently Logged On">Computers Not Recently Logged On</option>
 	<option value="Recently Created Computers">Recently Created Computers</option>
+	
 	<option value="All GPOs">All GPOs</option>
   </select>
-</div>
-
-<div id="daysFilter" class="govuk-form-group">
+  
+  <div id="daysFilter" class="govuk-form-group">
   <label class="govuk-label" for="width-3">
     Days to filter on
   </label>
   <input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="30">
  </div>
- 
 <div class="govuk-form-group">
+  <label class="govuk-label" for="frequency">
+    Frequency
+  </label>
+  <select class="govuk-select" id="frequency" name="frequency">
+    <option value="daily">Daily</option>
+    <option value="weekly" selected>Weekly</option>
+  </select>
+</div>
+<div class="govuk-form-group">
+  <label class="govuk-label" for="smtpserver">
+    SMTP Server
+  </label>
+  <input class="govuk-input govuk-input--width-20" id="smtpserver" name="smtpserver" type="text"></div>
+  
+  
+ 
+</div>
+  </div>
+  <div class="govuk-grid-column-one-half">
+    <div class="govuk-form-group">
   <label class="govuk-label" for="fromEmailAddress">
     From email address
   </label>
@@ -192,32 +193,40 @@ $(document).ready(function () {
     List of email recipients
   </label>
   <textarea class="govuk-textarea" id="emailRecipients" name="more-detail" rows="5"></textarea>
+
+  </div>
 </div>
+
+
+
+
+ 
+
 
 <!-- TODO use conditional checkboxes. need to check javascript-->
 
-<div class="govuk-form-group">
-  <label class="govuk-label" for="frequency">
-    Frequency
-  </label>
-  <select class="govuk-select" id="frequency" name="frequency">
-    <option value="daily">Daily</option>
-    <option value="weekly" selected>Weekly</option>
-  </select>
-</div>
-
-
-<div class="govuk-form-group">
-  <label class="govuk-label" for="smtpserver">
-    SMTP Server
-  </label>
-  <input class="govuk-input govuk-input--width-20" id="smtpserver" name="smtpserver" type="text"></div>
 
 <button id="submit" class="govuk-button" data-module="govuk-button">
   Schedule Report
 </button>
 
-<div id="status"></div>
+<div id="errorMessage"></div>
+
+<div id="status">
+<div class="govuk-notification-banner" role="region" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner">
+  <div class="govuk-notification-banner__header">
+    <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
+      Success
+    </h2>
+  </div>
+  <div class="govuk-notification-banner__content">
+    <p class="govuk-notification-banner__heading">
+      Report successfully scheduled.  
+      <a class="govuk-notification-banner__link" href="scheduling">Schedule another</a>.
+    </p>
+  </div>
+</div>
+</div>
 
 <div w3-include-html="footer"></div> 
 <script>includeHTML();</script>
