@@ -465,38 +465,26 @@ Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand us
 
             $gpos=@()
 		    foreach ($gpo in $GPOList) {
-			    #if ($user.objectClass -eq "user") {
-				    
-                    $MembersOfList=""
-                    #$GroupMembership = Get-ADPrincipalGroupMembership -Identity $computer -Credential $psCred -Server $hostname
-					#    foreach ($parentgroup in $GroupMembership) {
-					#	    
-					#	    $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
-				    #}
+			   
+                   
                     
-                    
+                    $gpoDetail = Get-GPOReport -Name $gpo.DisplayName -ReportType HTML #S-Server $hostname
 
-				    $gpos += @{GPOName=$gpo.DisplayName;
-                            LastLogonDate=$computer.LastLogonDate;
-                            DomainName=$computer.DomainName;
-                            Owner=$computer.Owner;
-                            GpoStatus=$computer.GpoStatus;
-                            Description=$computer.Description;
-                            CreationTime=$computer.CreationTime;
-                            ModificationTime=$computer.ModificationTime;
-                      
+				    $gpos += @{DisplayName=$gpo.DisplayName;
+                            DomainName=$gpo.DomainName;
+                            CreationTime=$gpo.CreationTime;
+                            ModificationTime=$gpo.ModificationTime;
+                            GpoStatus=$gpo.GpoStatus;
+                            Description=$gpo.Description;
+                            GPODetail=$gpoDetail;
                             }
 
                      
-
-			    #} else {
-				#    $users += @{Username=$user.name;Type=$user.objectClass}
-			    #}
 		    }
        
         
             Write-PodeJsonResponse -Value @{
-			    gpo = $GPOList
+			    gpo = $gpos
             }
 
         } else {
@@ -504,8 +492,6 @@ Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand us
 			Write-PodeJsonResponse -Value @{ gpo = 'null'; }
 		}
     }
-
-
 
 }
 
