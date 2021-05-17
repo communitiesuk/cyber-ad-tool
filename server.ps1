@@ -136,7 +136,7 @@ New-Item -Path 'C:\reports' -Name 'QufnrnX' -ItemType 'file' -Force -Value $pass
 
 `$users = Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users 
 Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users | Export-Csv -Path C:\reports\$reportNameTrimmed.csv
-#Send-MailMessage -From 'User01 <$fromEmailAddress>' -To 'User02 $emailRecipients' -Subject '$reportNameTrimmed' -SmtpServer $smtpserver  -Attachments  C:\reports\$reportNameTrimmed.csv
+Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Recipients $emailRecipients' -Subject '$reportNameTrimmed' -SmtpServer $smtpserver  -Attachments  C:\reports\$reportNameTrimmed.csv
 "
             
             $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\$reportNameTrimmed.ps1
@@ -399,14 +399,15 @@ Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand us
 						    
 						    $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
 				    }
-                    
                     try {
                          $ip=Resolve-DnsName -Name $computer.DNSHostName -Type A -Server $hostname
+                         $ipAddress=$ip.IPAddress;
                     }
                     catch {
-                        $ip="Not avaialable"
+                        $ipAddress="Not avaialable"
                         Write-Host "IP not available for $computer.DNSHostName"
                     }
+
 
 				    $computers += @{ComputerName=$computer.DNSHostName;
                             LastLogonDate=$computer.LastLogonDate;
@@ -421,7 +422,7 @@ Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand us
                             PasswordLastSet=$computer.PasswordLastSet;
                             PasswordExpired=$computer.PasswordExpired;
                             PasswordNeverExpires=$computer.PasswordNeverExpires;
-                            IPv4Address=$ip.IPAddress;
+                            IPv4Address=$ipAddress;
                             OperatingSystem=$computer.OperatingSystem;
                             OperatingSystemVersion=$computer.OperatingSystemVersion;
                             #IPv4Address=$computer.IPv4Address
