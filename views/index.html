@@ -30,7 +30,47 @@ $(document).ready(function () {
 					$("#logon").hide();
 					var forest = result["forest"]["Name"]
 					
-					var t = '<h2 class="govuk-heading-l">Forest = ' + forest + '</h2>';
+					var userCount = result["userCount"]
+					var groupCount = result["groupCount"]
+					var computerCount = result["computerCount"]
+					
+					var t = ''
+					t+= '<dl class="govuk-summary-list">';
+					t+= '	<div class="govuk-summary-list__row">';
+					t+= '	<dt class="govuk-summary-list__key">';
+					t+= '	  Forest';
+					t+= '	</dt>';
+					t+= '	<dd class="govuk-summary-list__value">';
+					t+= forest;
+					t+= '	</dd>';
+					t+= '  </div>';
+					t+= '	<div class="govuk-summary-list__row">';
+					t+= '	<dt class="govuk-summary-list__key">';
+					t+= '	  User Count';
+					t+= '	</dt>';
+					t+= '	<dd class="govuk-summary-list__value">';
+					t+= userCount;
+					t+= '	</dd>';
+					t+= '  </div>';
+					t+= '  <div class="govuk-summary-list__row">';
+					t+= '	<dt class="govuk-summary-list__key">';
+					t+= '	  Group Count';
+					t+= '	</dt>';
+					t+= '	<dd class="govuk-summary-list__value">';
+					t+= groupCount;
+					t+= '	</dd>';
+					t+= '  </div>';
+					t+= '  <div class="govuk-summary-list__row">';
+					t+= '	<dt class="govuk-summary-list__key">';
+					t+= '	  Computer Count';
+					t+= '	</dt>';
+					t+= '	<dd class="govuk-summary-list__value">';
+					t+= computerCount;
+					t+= '	</dd>';
+					t+= '  </div>';
+					  
+					t+= '</dl>	';	
+					
 					
 					t+='<div class="govuk-form-group">';
 					t+='<label class="govuk-label" for="sort">';

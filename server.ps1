@@ -62,7 +62,18 @@ Start-PodeServer {
 
 		$domain=Get-ADDomain -Credential $psCred
 		$forest=Get-ADForest -Credential $psCred -Server $hostname
-		Write-PodeJsonResponse -Value @{ 'forest' = $forest }
+        
+        $userCount = (Get-ADUser -Filter * -Credential $psCred -Server $hostname).Count
+        $groupCount = (Get-ADGroup -Filter * -Credential $psCred -Server $hostname).Count
+        $computerCount = (Get-ADComputer -Filter * -Credential $psCred -Server $hostname).Count
+
+		Write-PodeJsonResponse -Value @{ 'forest' = $forest
+                                         'userCount' = $userCount
+                                         'groupCount' = $groupCount
+                                         'computerCount' = $computerCount }
+
+
+
     }
 	
     Add-PodeRoute -Method Get -Path '/scheduleReport/:reportName/:daysSelect/:fromEmailAddress/:emailRecipients/:frequency/:smtpserver' -ScriptBlock { 
@@ -195,6 +206,9 @@ Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Re
 			$psCred = User-Auth
             $hostname =  Get-Hostname
 		    $ou=Get-ADOrganizationalUnit -Filter * -Credential $psCred -Server $hostname
+
+           
+
             #todo need to include domain
 		    Write-PodeJsonResponse -Value @{ 'ou' = $ou }
 
