@@ -30,7 +30,7 @@ $(document).ready(function () {
 		
 		$.ajax({
 			type: "GET",
-			url: "report/" + $("#reportSelect").val() + "/" + $("#daysSelect").val(),
+			url: "report/" + $("#reportSelect").val() + "/" + $("#daysSelect").val() + "/" + $("#quickQuery").is(':checked'),
 			dataType: "json",
 			success: function (result, status, xhr) {
 				if (result["users"] == "null") {
@@ -38,7 +38,7 @@ $(document).ready(function () {
 				} 
 					
 				
-				
+				var queryTime = (result["queryTime"])
 				var data = [];
 				var t = '<h2 class="govuk-heading-l">' + $("#reportSelect").val() + '</h2>';	
 
@@ -54,7 +54,6 @@ $(document).ready(function () {
 				data.push(userDetails);
 				var userId="";
 				userCount = result["users"].length;
-				
 				
 				for (i = 0; i < userCount; i++) {
 					userId="userID" + i;
@@ -108,6 +107,9 @@ $(document).ready(function () {
 					userDetails = [username,distinguishedName,objectGuid,badLogonCount,created,deleted,enabled,lockedOut,passwordLastSet,passwordExpired,passwordNeverExpires,logon,memberOf];
 					data.push(userDetails); 
 				}
+				t+="<tr><td>User Count =  " + userCount + "</td></tr>";
+				t+="<tr><td>Took  " + queryTime + " seconds</td></tr>";
+				
 				t+='</tbody></table>';
 				var reportData = $(t);
 				$("#report").html(reportData);	
@@ -273,6 +275,17 @@ $(document).ready(function () {
   </label>
   <input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="30">
  </div>
+
+<div class="govuk-form-group">
+	<div class="govuk-checkboxes">
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input" id="quickQuery" name="quickQuery" type="checkbox" value="quickQuery">
+        <label class="govuk-label govuk-checkboxes__label" for="quickQuery">
+          Quick Query (excludes group membership)
+        </label>
+      </div>
+	</div>
+</div>
 
 <button id="runReport" class="govuk-button" data-module="govuk-button">
   Run Report

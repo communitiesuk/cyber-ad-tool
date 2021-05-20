@@ -159,7 +159,6 @@ Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Re
             $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\setCreds.ps1
             $trigger = New-ScheduledTaskTrigger -Once -At (get-date).AddSeconds(4);
             
-            # $trigger = New-ScheduledTaskTrigger -Daily -At 5:07pm
             $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
             Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskPath "ADReportingTasks" -TaskName "setCreds" -Description "This task sets creds"
             #Start-Sleep -s 5
@@ -316,40 +315,38 @@ Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Re
         }
     }
 	
-	Add-PodeRoute -Method Get -Path '/report/:reportName/:daysFilter' -ScriptBlock {
+	Add-PodeRoute -Method Get -Path '/report/:reportName/:daysFilter/:quickQuery' -ScriptBlock {
          if (Test-PodeCookie -Name 'password') {
-            Write-Host "cookie set"
+           
+            $queryStart=(GET-DATE)
+
 
             $reportName = $WebEvent.Parameters['reportName']
             $daysFilter = $WebEvent.Parameters['daysFilter']
-            Write-Host "REPORT NAME: " + $reportName
+            $quickQuery = $WebEvent.Parameters['quickQuery']
+
+            Write-Host "Quick Query: " + $quickQuery
+            Write-Host "REPORT NAME IS : " + $reportName
             $psCred = User-Auth
-            #$psCred=Get-PodeCookie -Name 'psCred' -Raw -Secret 'hunter2'
-            #$psCred=Get-PodeCookie -Name 'psCred' -Raw | New-Object System.Management.Automation.PSCredential
             $hostname =  Get-Hostname
            
-             #Write-Host "hostname : $hostname"
-             #Write-Host "$psCred : $psCred"
-
-             #Write-Host $psCred.getNetworkCredential().username
-             #Write-Host $psCred.getNetworkCredential().password
-
-
             $UserList = Get-Filter $reportName $daysFilter $psCred $hostname
 
           
-            Write-Host "USERLIST : $UserList"
+            
 
             $users=@()
 		    foreach ($user in $UserList) {
 			    if ($user.objectClass -eq "user") {
 				    
-                    $MembersOfList=""
-                    $GroupMembership = Get-ADPrincipalGroupMembership -Identity $user -Credential $psCred -Server $hostname
-					foreach ($parentgroup in $GroupMembership) {
+                    if ($quickQuery -eq "false") {    
+                        $MembersOfList=""
+                        $GroupMembership = Get-ADPrincipalGroupMembership -Identity $user -Credential $psCred -Server $hostname
+					    foreach ($parentgroup in $GroupMembership) {
 						    
-						    $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
-				    }
+						        $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
+				        }
+                    }
                 
 				    $users += @{Username=$user.name;
                             Type=$user.objectClass;
@@ -375,10 +372,15 @@ Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Re
 				    $users += @{Username=$user.name;Type=$user.objectClass}
 			    }
 		    }
-       
+            $queryEnd=(GET-DATE)
+            $totalQueryTime = ([math]::Round((NEW-TIMESPAN –Start $queryStart –End $queryEnd).TotalSeconds))
+
+            Write-Host " totalQueryTime = $totalQueryTime"
+
         
             Write-PodeJsonResponse -Value @{
 			    users = $users
+                queryTime = $totalQueryTime
             }
 
         } else {
@@ -387,13 +389,22 @@ Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Re
 		}
     }
 
-    Add-PodeRoute -Method Get -Path '/report/computers/:reportName/:daysFilter/:ou' -ScriptBlock {
+    Add-PodeRoute -Method Get -Path '/report/computers/:reportName/:daysFilter/:ou/:quickQuery' -ScriptBlock {
          if (Test-PodeCookie -Name 'password') {
         
+            $queryStart=(GET-DATE)
+
+
+
+
             $reportName = $WebEvent.Parameters['reportName']
             $daysFilter = $WebEvent.Parameters['daysFilter']
             $ou = $WebEvent.Parameters['ou']
+            $quickQuery = $WebEvent.Parameters['quickQuery']
+
             Write-Host "OU: " + $ou
+            Write-Host "Quick Query: " + $quickQuery
+
             $psCred = User-Auth
             $hostname =  Get-Hostname
            
@@ -401,12 +412,14 @@ Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Re
             $ComputerList = Get-Filter $reportName $daysFilter $psCred $hostname $ou
 
           
-            
+            $queryLoopStart=(GET-DATE)
 
             $computers=@()
 		    foreach ($computer in $ComputerList) {
 			    #if ($user.objectClass -eq "user") {
 				    
+                    
+                if ($quickQuery -eq "false") {    
                     $MembersOfList=""
                     $GroupMembership = Get-ADPrincipalGroupMembership -Identity $computer -Credential $psCred -Server $hostname
 					    foreach ($parentgroup in $GroupMembership) {
@@ -421,7 +434,7 @@ Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Re
                         $ipAddress="Not avaialable"
                         Write-Host "IP not available for $computer.DNSHostName"
                     }
-
+                }
 
 				    $computers += @{ComputerName=$computer.DNSHostName;
                             LastLogonDate=$computer.LastLogonDate;
@@ -449,9 +462,19 @@ Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Re
 			    #}
 		    }
        
-        
+            $queryEnd=(GET-DATE)
+            $totalQueryTime = ([math]::Round((NEW-TIMESPAN –Start $queryStart –End $queryEnd).TotalSeconds))
+            $loopQueryTime = ([math]::Round((NEW-TIMESPAN –Start $queryLoopStart –End $queryEnd).TotalSeconds))
+
+            
+
+            Write-Host " totalQueryTime = $totalQueryTime"
+            Write-Host " loopQueryTime = $loopQueryTime"
+
+
             Write-PodeJsonResponse -Value @{
 			    computers = $computers
+                queryTime = $totalQueryTime
             }
 
         } else {

@@ -55,9 +55,13 @@ $(document).ready(function () {
 		$("#showGroups").hide();
 		$("#saveCSVDiv").hide();
 		
+		
+
+		
+		
 		$.ajax({
 			type: "GET",
-			url: "report/computers/" + $("#reportSelect").val() + "/" + $("#daysSelect").val() + "/" + $("#ouSelect").val(),
+			url: "report/computers/" + $("#reportSelect").val() + "/" + $("#daysSelect").val() + "/" + $("#ouSelect").val() + "/" + $("#quickQuery").is(':checked'),
 			dataType: "json",
 			success: function (result, status, xhr) {
 				if (result["computers"] == "null") {
@@ -65,7 +69,7 @@ $(document).ready(function () {
 				} 
 					
 				
-				
+				var queryTime = (result["queryTime"])
 				var data = [];
 				var t = '<h2 class="govuk-heading-l">' + $("#reportSelect").val() + '</h2>';	
 
@@ -143,6 +147,8 @@ $(document).ready(function () {
 					totalCount++;
 				}
 				t+="<tr><td>Total Count =  " + totalCount + "</td></tr>";
+				t+="<tr><td>Took  " + queryTime + " seconds</td></tr>";
+				
 				t+='</tbody></table>';
 				
 				var reportData = $(t);
@@ -273,9 +279,26 @@ Select an OU
   <input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="90">
 </div>
 
+<div class="govuk-form-group">
+	<div class="govuk-checkboxes">
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input" id="quickQuery" name="quickQuery" type="checkbox" value="quickQuery">
+        <label class="govuk-label govuk-checkboxes__label" for="quickQuery">
+          Quick Query (excludes IP addresses and group membership)
+        </label>
+      </div>
+	</div>
+</div>
+
+
 <button id="runReport" class="govuk-button" data-module="govuk-button">
   Run Report
 </button>
+
+
+
+	
+	
 
 <div class="textAlignCenter" id="loading" name="loading">
     <img src="/assets/images/loading.gif" />
