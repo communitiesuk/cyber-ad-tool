@@ -17,16 +17,42 @@ Powershell 5 or above
 
 
 
+### Installing the application
+
+Clone this repository locally to the C:\ drive
+
+Run the following powershell script as Administrator :
+
+```
+C:\cyber-ad-tool\install.ps1
+```
+
+Note, if you install the tool to any other location than C:\cyber-ad-tool then you will have to update the following line in install.ps1 accordingly :
+
+```
+$file = 'C:\cyber-ad-tool\server.ps1'
+```
+
+When prompted select Y
+
+This will install the tool as a windows service called "Active Directory Reporting Tool". 
+
 ### Starting the application
 
-Clone this repository locally
-
-Navigate to the adaudit directory and run the server.ps1 script as Administrator
-When prompted select Y
+Navigate to services and start the "Active Directory Reporting Tool" service
 
 ### Stopping the application
 
-Close the powershell window
+Navigate to services and stop the "Active Directory Reporting Tool" service
+
+### Removing the service
+
+Open a Powershell window as Administrator and run the following command :
+
+```
+nssm remove $name confirm
+```
+
 
 ### Reports available
 

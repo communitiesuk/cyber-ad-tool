@@ -2,7 +2,7 @@
 <head>
 <title>Active Directory Reporting Tool</title>
 <link rel="stylesheet" type="text/css" href="/styles/govuk-frontend-3.10.2.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script src="/javascript/jquery.min.js"></script>
 <script src="/javascript/ad.js"></script>
 
 <script>
@@ -73,7 +73,7 @@ $(document).ready(function () {
 				t+='<thead class="govuk-table__head">';			
 				t+='<tr class="govuk-table__row">';
 				t+='<th scope="col" class="govuk-table__header">Name</th>';
-				t+='<th scope="col" class="govuk-table__header">Description</th>';
+				//t+='<th scope="col" class="govuk-table__header">Description</th>';
 				t+='</tr></thead>';
 				
 				
@@ -88,7 +88,7 @@ $(document).ready(function () {
 					var modificationTime = parseDate(result["gpo"][i]["ModificationTime"]);
 					var gpoStatus = result["gpo"][i]["GpoStatus"];
 					var description = result["gpo"][i]["Description"];
-					
+					var gpoDetail = result["gpo"][i]["GPODetail"];
 					
 					t+='<tr class="govuk-table__row">';
 					t+="<td class='govuk-table__cell'>";
@@ -100,20 +100,28 @@ $(document).ready(function () {
 					t+='</summary>';
 					t+='<div class="govuk-details__text">';
 					t+='<ul class="govuk-list govuk-list">';
+					/*
 					t+='<li><b>Owner</b>: ' + owner + '</li>';
 					t+='<li><b>Domain Name</b>: ' + domainName + '</li>';
 					t+='<li><b>Created</b>: ' + creationTime + '</li>';
 					t+='<li><b>Last Modified</b>: ' + modificationTime  + '</li>';
 					t+='<li><b>Status</b>: ' + gpoStatus + '</li>';
+					t+='<li>' + gpoDetail + '</li>';
 					
 					t+='</ul>';
+					*/
+					t+=gpoDetail;
 					t+='</div>';
 					t+='</details>';
-					t+="</td><td class='govuk-table__cell'>" + description + "</td>";
+					//t+="</td><td class='govuk-table__cell'>" + description + "</td>";
 					
 					t+='</tr>';
 					userDetails = [displayName,owner,domainName,creationTime,modificationTime,gpoStatus,description];
 					data.push(userDetails); 
+					
+					
+					
+					
 					totalCount++;
 				}
 				t+="<tr><td>Total Count =  " + totalCount + "</td></tr>";
@@ -190,7 +198,12 @@ $(document).ready(function () {
           </li>
 		  <li class="govuk-header__navigation-item govuk-header__navigation-item--active">
             <a class="govuk-header__link" href="gpo">
-              Group Policy Reports
+              GPO Reports
+            </a>
+          </li>
+		  <li class="govuk-header__navigation-item">
+            <a class="govuk-header__link" href="scheduling">
+              Scheduling
             </a>
           </li>
         </ul>

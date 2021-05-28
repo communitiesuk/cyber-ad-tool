@@ -52,17 +52,132 @@ Start-PodeServer {
 		$hostname = $WebEvent.Parameters['hostname']
 		
 		Set-PodeCookie -Name 'username' -Value $username
-		Set-PodeCookie -Name 'password' -Value $WebEvent.Parameters['password'] -Secret 'hunter2' -Duration 6000 -Discard
+
+        $password = $WebEvent.Parameters['password']
+        $securepass = ConvertTo-SecureString $password -AsPlainText -Force
+        $encryptedpass = ConvertFrom-SecureString -SecureString $securepass
+
+        Set-PodeCookie -Name 'password' -Value  $encryptedpass  -Duration 6000 -Discard
 		Set-PodeCookie -Name 'hostname' -Value $hostname
 
 		$domain=Get-ADDomain -Credential $psCred
 		$forest=Get-ADForest -Credential $psCred -Server $hostname
-		Write-PodeJsonResponse -Value @{ 'forest' = $forest }
+        
+        $userCount = (Get-ADUser -Filter * -Credential $psCred -Server $hostname).Count
+        $groupCount = (Get-ADGroup -Filter * -Credential $psCred -Server $hostname).Count
+        $computerCount = (Get-ADComputer -Filter * -Credential $psCred -Server $hostname).Count
+
+		Write-PodeJsonResponse -Value @{ 'forest' = $forest
+                                         'userCount' = $userCount
+                                         'groupCount' = $groupCount
+                                         'computerCount' = $computerCount }
+
+
+
     }
 	
+    Add-PodeRoute -Method Get -Path '/scheduleReport/:reportName/:daysSelect/:fromEmailAddress/:emailRecipients/:frequency/:smtpserver' -ScriptBlock { 
+	    if (Test-PodeCookie -Name 'password') {
+
+			$psCred = User-Auth
+
+            
+            $user=Get-PodeCookie -Name 'username' -Raw
+	        $pwd=Get-PodeCookie -Name 'password' -Raw
+	        $host=Get-PodeCookie -Name 'hostname' -Raw
+            $pass = ConvertTo-SecureString $pwd.Value -AsPlainText -Force
+            $password = $pwd.Value
+
+            $username = $user.Value
+
+            $hostname =  Get-Hostname
+            $reportname = $WebEvent.Parameters['reportName']
+            $daysSelect = $WebEvent.Parameters['daysSelect']
+            $fromEmailAddress = $WebEvent.Parameters['fromEmailAddress']
+            $emailRecipients = $WebEvent.Parameters['emailRecipients']
+            $frequency = $WebEvent.Parameters['frequency']
+            $smtpserver = $WebEvent.Parameters['smtpserver']
+
+
+
+            New-Item -Path "C:\reports" -Name "setCreds.ps1" -ItemType "file" -Force -Value "
+#`$password=$password
+#`$securepass = ConvertTo-SecureString `$password -AsPlainText -Force
+#ConvertFrom-SecureString -SecureString `$securepass | set-content 'C:\reports\QufnrnX'
+New-Item -Path 'C:\reports' -Name 'QufnrnX' -ItemType 'file' -Force -Value $password
+(get-item C:\reports\QufnrnX).Attributes += 'Hidden'
+            "
+            
+
+		    $reportName = $WebEvent.Parameters['reportName']
+            $reportNameTrimmed = $reportName.replace(' ','')
+		    
+            New-Item -Path "C:\reports" -Name "$reportNameTrimmed.ps1" -ItemType "file" -Force -Value "
+[System.Uri]`$Uri = 'http://localhost:8080/report/$reportName/$daysSelect' # Add the Uri 
+`$Cookie = New-Object System.Net.Cookie
+`$Cookie.Name = 'username' # Add the name of the cookie
+`$Cookie.Value = '$username' # Add the value of the cookie
+`$Cookie.Domain = `$uri.DnsSafeHost
+
+`$securepass = Get-Content 'C:\reports\QufnrnX' | ConvertTo-SecureString 
+`$encryptedpass = ConvertFrom-SecureString -SecureString `$securepass
+
+
+
+`$Cookie2 = New-Object System.Net.Cookie
+`$Cookie2.Name = 'password' # Add the name of the cookie
+`$Cookie2.Value = `$encryptedpass # Add the value of the cookie
+`$Cookie2.Domain = `$uri.DnsSafeHost
+
+`$Cookie3 = New-Object System.Net.Cookie
+`$Cookie3.Name = 'hostname' # Add the name of the cookie
+`$Cookie3.Value = '$hostname' # Add the value of the cookie
+`$Cookie3.Domain = `$uri.DnsSafeHost
+
+`$WebSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+`$WebSession.Cookies.Add(`$Cookie)
+`$WebSession.Cookies.Add(`$Cookie2)
+`$WebSession.Cookies.Add(`$Cookie3)
+
+
+`$props = @{
+    Uri         = `$uri.AbsoluteUri
+    WebSession  = `$WebSession
+}
+
+`$users = Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users 
+Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users | Export-Csv -Path C:\reports\$reportNameTrimmed.csv
+Send-MailMessage -From 'AD Reporting Tool <$fromEmailAddress>' -To 'AD Report Recipients $emailRecipients' -Subject '$reportNameTrimmed' -SmtpServer $smtpserver  -Attachments  C:\reports\$reportNameTrimmed.csv
+"
+            
+            $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\$reportNameTrimmed.ps1
+            $trigger = New-ScheduledTaskTrigger -Daily -At 5:08pm
+            $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+            Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskPath "ADReportingTasks" -TaskName "$reportNameTrimmed" -Description "This task calls the $reportName report"
+
+
+            $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\setCreds.ps1
+            $trigger = New-ScheduledTaskTrigger -Once -At (get-date).AddSeconds(4);
+            
+            $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+            Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskPath "ADReportingTasks" -TaskName "setCreds" -Description "This task sets creds"
+            #Start-Sleep -s 5
+            #Unregister-ScheduledTask -TaskName setCreds -Confirm:$false #  TODO restore
+            
+
+		    Write-PodeJsonResponse -Value @{ 'success' = "true" }
+
+		} else {
+			Write-Host "cookie not set"
+			Write-PodeJsonResponse -Value @{ 'success' = 'null'; }
+		}
+    }
+    
     Add-PodeRoute -Method Get -Path '/disableUsers/:userList' -ScriptBlock {
 	    if (Test-PodeCookie -Name 'password') {
 			Write-Host "cookie set"
+            #$psCred=Get-PodeCookie -Name 'psCred' -Raw -Secret 'hunter2'
+
 			$psCred = User-Auth
             $hostname =  Get-Hostname
 
@@ -90,6 +205,9 @@ Start-PodeServer {
 			$psCred = User-Auth
             $hostname =  Get-Hostname
 		    $ou=Get-ADOrganizationalUnit -Filter * -Credential $psCred -Server $hostname
+
+           
+
             #todo need to include domain
 		    Write-PodeJsonResponse -Value @{ 'ou' = $ou }
 
@@ -197,31 +315,38 @@ Start-PodeServer {
         }
     }
 	
-	Add-PodeRoute -Method Get -Path '/report/:reportName/:daysFilter' -ScriptBlock {
+	Add-PodeRoute -Method Get -Path '/report/:reportName/:daysFilter/:quickQuery' -ScriptBlock {
          if (Test-PodeCookie -Name 'password') {
-        
+           
+            $queryStart=(GET-DATE)
+
+
             $reportName = $WebEvent.Parameters['reportName']
             $daysFilter = $WebEvent.Parameters['daysFilter']
-            Write-Host "REPORT NAME: " + $reportName
+            $quickQuery = $WebEvent.Parameters['quickQuery']
+
+            Write-Host "Quick Query: " + $quickQuery
+            Write-Host "REPORT NAME IS : " + $reportName
             $psCred = User-Auth
             $hostname =  Get-Hostname
            
-
             $UserList = Get-Filter $reportName $daysFilter $psCred $hostname
 
           
-            Write-Host "USERLIST : $UserList"
+            
 
             $users=@()
 		    foreach ($user in $UserList) {
 			    if ($user.objectClass -eq "user") {
 				    
-                    $MembersOfList=""
-                    $GroupMembership = Get-ADPrincipalGroupMembership -Identity $user -Credential $psCred -Server $hostname
-					foreach ($parentgroup in $GroupMembership) {
+                    if ($quickQuery -eq "false") {    
+                        $MembersOfList=""
+                        $GroupMembership = Get-ADPrincipalGroupMembership -Identity $user -Credential $psCred -Server $hostname
+					    foreach ($parentgroup in $GroupMembership) {
 						    
-						    $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
-				    }
+						        $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
+				        }
+                    }
                 
 				    $users += @{Username=$user.name;
                             Type=$user.objectClass;
@@ -247,10 +372,15 @@ Start-PodeServer {
 				    $users += @{Username=$user.name;Type=$user.objectClass}
 			    }
 		    }
-       
+            $queryEnd=(GET-DATE)
+            $totalQueryTime = ([math]::Round((NEW-TIMESPAN –Start $queryStart –End $queryEnd).TotalSeconds))
+
+            Write-Host " totalQueryTime = $totalQueryTime"
+
         
             Write-PodeJsonResponse -Value @{
 			    users = $users
+                queryTime = $totalQueryTime
             }
 
         } else {
@@ -259,13 +389,22 @@ Start-PodeServer {
 		}
     }
 
-    Add-PodeRoute -Method Get -Path '/report/computers/:reportName/:daysFilter/:ou' -ScriptBlock {
+    Add-PodeRoute -Method Get -Path '/report/computers/:reportName/:daysFilter/:ou/:quickQuery' -ScriptBlock {
          if (Test-PodeCookie -Name 'password') {
         
+            $queryStart=(GET-DATE)
+
+
+
+
             $reportName = $WebEvent.Parameters['reportName']
             $daysFilter = $WebEvent.Parameters['daysFilter']
             $ou = $WebEvent.Parameters['ou']
+            $quickQuery = $WebEvent.Parameters['quickQuery']
+
             Write-Host "OU: " + $ou
+            Write-Host "Quick Query: " + $quickQuery
+
             $psCred = User-Auth
             $hostname =  Get-Hostname
            
@@ -273,26 +412,29 @@ Start-PodeServer {
             $ComputerList = Get-Filter $reportName $daysFilter $psCred $hostname $ou
 
           
-            
+            $queryLoopStart=(GET-DATE)
 
             $computers=@()
 		    foreach ($computer in $ComputerList) {
 			    #if ($user.objectClass -eq "user") {
 				    
+                    
+                if ($quickQuery -eq "false") {    
                     $MembersOfList=""
                     $GroupMembership = Get-ADPrincipalGroupMembership -Identity $computer -Credential $psCred -Server $hostname
 					    foreach ($parentgroup in $GroupMembership) {
 						    
 						    $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
 				    }
-                    
                     try {
                          $ip=Resolve-DnsName -Name $computer.DNSHostName -Type A -Server $hostname
+                         $ipAddress=$ip.IPAddress;
                     }
                     catch {
-                        $ip="Not avaialable"
+                        $ipAddress="Not avaialable"
                         Write-Host "IP not available for $computer.DNSHostName"
                     }
+                }
 
 				    $computers += @{ComputerName=$computer.DNSHostName;
                             LastLogonDate=$computer.LastLogonDate;
@@ -307,7 +449,7 @@ Start-PodeServer {
                             PasswordLastSet=$computer.PasswordLastSet;
                             PasswordExpired=$computer.PasswordExpired;
                             PasswordNeverExpires=$computer.PasswordNeverExpires;
-                            IPv4Address=$ip.IPAddress;
+                            IPv4Address=$ipAddress;
                             OperatingSystem=$computer.OperatingSystem;
                             OperatingSystemVersion=$computer.OperatingSystemVersion;
                             #IPv4Address=$computer.IPv4Address
@@ -320,9 +462,19 @@ Start-PodeServer {
 			    #}
 		    }
        
-        
+            $queryEnd=(GET-DATE)
+            $totalQueryTime = ([math]::Round((NEW-TIMESPAN –Start $queryStart –End $queryEnd).TotalSeconds))
+            $loopQueryTime = ([math]::Round((NEW-TIMESPAN –Start $queryLoopStart –End $queryEnd).TotalSeconds))
+
+            
+
+            Write-Host " totalQueryTime = $totalQueryTime"
+            Write-Host " loopQueryTime = $loopQueryTime"
+
+
             Write-PodeJsonResponse -Value @{
 			    computers = $computers
+                queryTime = $totalQueryTime
             }
 
         } else {
@@ -351,38 +503,26 @@ Start-PodeServer {
 
             $gpos=@()
 		    foreach ($gpo in $GPOList) {
-			    #if ($user.objectClass -eq "user") {
-				    
-                    $MembersOfList=""
-                    #$GroupMembership = Get-ADPrincipalGroupMembership -Identity $computer -Credential $psCred -Server $hostname
-					#    foreach ($parentgroup in $GroupMembership) {
-					#	    
-					#	    $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
-				    #}
+			   
+                   
                     
-                    
+                    $gpoDetail = Get-GPOReport -Name $gpo.DisplayName -ReportType HTML #S-Server $hostname
 
-				    $gpos += @{GPOName=$gpo.DisplayName;
-                            LastLogonDate=$computer.LastLogonDate;
-                            DomainName=$computer.DomainName;
-                            Owner=$computer.Owner;
-                            GpoStatus=$computer.GpoStatus;
-                            Description=$computer.Description;
-                            CreationTime=$computer.CreationTime;
-                            ModificationTime=$computer.ModificationTime;
-                      
+				    $gpos += @{DisplayName=$gpo.DisplayName;
+                            DomainName=$gpo.DomainName;
+                            CreationTime=$gpo.CreationTime;
+                            ModificationTime=$gpo.ModificationTime;
+                            GpoStatus=$gpo.GpoStatus;
+                            Description=$gpo.Description;
+                            GPODetail=$gpoDetail;
                             }
 
                      
-
-			    #} else {
-				#    $users += @{Username=$user.name;Type=$user.objectClass}
-			    #}
 		    }
        
         
             Write-PodeJsonResponse -Value @{
-			    gpo = $GPOList
+			    gpo = $gpos
             }
 
         } else {
@@ -391,22 +531,26 @@ Start-PodeServer {
 		}
     }
 
-
-
 }
 
 function User-Auth {
     
     $user=Get-PodeCookie -Name 'username' -Raw
-	$pwd=Get-PodeCookie -Name 'password' -Raw -Secret 'hunter2'
+	$pwd=Get-PodeCookie -Name 'password' -Raw
 	$host=Get-PodeCookie -Name 'hostname' -Raw
-				
+    $password = ConvertTo-SecureString $pwd.Value	
+    
+    Write-Host "user is : $user"
+    Write-Host "host is : $host"
+    Write-Host "pwd is : $pwd"
+    Write-Host "password is : $password"
+    	
 	$username="DOMAIN\"+$user.Value #TODO need to add domain here   logoncount
-	$pass=$pwd.Value
 	$hostname=$host.Value	
-	$password = ConvertTo-SecureString $pass -AsPlainText -Force
 			
 	$psCred = New-Object System.Management.Automation.PSCredential -ArgumentList ($username, $password)
+    Write-Host "psCred created"
+    
     return $psCred
 }
 
