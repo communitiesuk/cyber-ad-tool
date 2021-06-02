@@ -103,7 +103,7 @@ New-Item -Path 'C:\reports' -Name 'QufnrnX' -ItemType 'file' -Force -Value $($pa
             $reportName = $WebEvent.Parameters['reportName']
             $reportNameTrimmed = $reportName.replace(' ', '')
             New-Item -Path "C:\reports" -Name "$($reportNameTrimmed).ps1" -ItemType "file" -Force -Value "
-[System.Uri]`$Uri = 'https://localhost:8444/report/$($reportName)/$($daysSelect)' # Add the Uri 
+[System.Uri]`$Uri = 'https://localhost:$($Port)/report/$($reportName)/$($daysSelect)' # Add the Uri 
 `$Cookie = New-Object System.Net.Cookie
 `$Cookie.Name = 'username' # Add the name of the cookie
 `$Cookie.Value = '$($username)' # Add the value of the cookie
@@ -127,8 +127,8 @@ New-Item -Path 'C:\reports' -Name 'QufnrnX' -ItemType 'file' -Force -Value $($pa
     WebSession  = `$WebSession
 }
 `$users = Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users 
-Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select -expand users | Export-Csv -Path C:\reports\$($reportNameTrimmed).csv
-Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report Recipients $($emailRecipients)' -Subject '$($reportNameTrimmed)' -SmtpServer $($smtpserver)  -Attachments  C:\reports\$($reportNameTrimmed).csv
+Invoke-RestMethod @props | ConvertTo-Json | ConvertFrom-Json | Select-Object -expand users | Export-Csv -Path C:\reports\$($reportNameTrimmed).csv
+Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report Recipients $($emailRecipients)' -Subject '$($reportNameTrimmed)' -SmtpServer $($smtpserver) -Attachments C:\reports\$($reportNameTrimmed).csv
 "           
             $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument C:\reports\$reportNameTrimmed.ps1
             $trigger = New-ScheduledTaskTrigger -Daily -At 5:08pm
