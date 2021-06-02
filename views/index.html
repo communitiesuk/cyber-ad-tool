@@ -1,272 +1,282 @@
 <html lang="en" class="govuk-template ">
-<head> 
-<title>Active Directory Audit Tool</title>
-<link rel="stylesheet" type="text/css" href="/styles/govuk-frontend-3.10.2.min.css">
-<script src="/javascript/jquery.min.js"></script>
-<script src="/javascript/ad.js"></script>
-<script>
-$(document).ready(function () {
-	$("#domainSelectButton").hide();
-	$("#reportSelectButton").hide();
-	$("#computerReportSelectButton").hide();
-	$("#gpoReportSelectButton").hide();
-	$("#schedulingSelectButton").hide();
-	
-	
-    $("#submit").click(function (e) {
+
+<head>
+  <title>Active Directory Audit Tool</title>
+  <link rel="stylesheet" type="text/css" href="/styles/govuk-frontend-3.10.2.min.css">
+  <script src="/javascript/jquery.min.js"></script>
+  <script src="/javascript/ad.js"></script>
+  <script>
+    $(document).ready(function () {
+      $("#domainSelectButton").hide();
+      $("#reportSelectButton").hide();
+      $("#computerReportSelectButton").hide();
+      $("#gpoReportSelectButton").hide();
+      $("#schedulingSelectButton").hide();
+
+
+      $("#submit").click(function (e) {
         var validate = Validate();
         $("#message").html(validate);
         if (validate.length == 0) {
-            $.ajax({
-                type: "GET",
-                url: "login/" + $("#username").val() + "/" + $("#password").val() + "/" + $("#hostname").val(),
-                dataType: "json",
-                success: function (result, status, xhr) {
-                    $("#domainSelectButton").show();
-					$("#reportSelectButton").show();
-					$("#computerReportSelectButton").show();
-					$("#gpoReportSelectButton").show();
-					$("#schedulingSelectButton").show();
-					$("#logon").hide();
-					var forest = result["forest"]["Name"]
-					
-					var userCount = result["userCount"]
-					var groupCount = result["groupCount"]
-					var computerCount = result["computerCount"]
-					
-					var t = ''
-					t+= '<dl class="govuk-summary-list">';
-					t+= '	<div class="govuk-summary-list__row">';
-					t+= '	<dt class="govuk-summary-list__key">';
-					t+= '	  Forest';
-					t+= '	</dt>';
-					t+= '	<dd class="govuk-summary-list__value">';
-					t+= forest;
-					t+= '	</dd>';
-					t+= '  </div>';
-					t+= '	<div class="govuk-summary-list__row">';
-					t+= '	<dt class="govuk-summary-list__key">';
-					t+= '	  User Count';
-					t+= '	</dt>';
-					t+= '	<dd class="govuk-summary-list__value">';
-					t+= userCount;
-					t+= '	</dd>';
-					t+= '  </div>';
-					t+= '  <div class="govuk-summary-list__row">';
-					t+= '	<dt class="govuk-summary-list__key">';
-					t+= '	  Group Count';
-					t+= '	</dt>';
-					t+= '	<dd class="govuk-summary-list__value">';
-					t+= groupCount;
-					t+= '	</dd>';
-					t+= '  </div>';
-					t+= '  <div class="govuk-summary-list__row">';
-					t+= '	<dt class="govuk-summary-list__key">';
-					t+= '	  Computer Count';
-					t+= '	</dt>';
-					t+= '	<dd class="govuk-summary-list__value">';
-					t+= computerCount;
-					t+= '	</dd>';
-					t+= '  </div>';
-					  
-					t+= '</dl>	';	
-					
-					
-					t+='<div class="govuk-form-group">';
-					t+='<label class="govuk-label" for="sort">';
-					t+='Select a Domain';
-					t+='</label>';
-					t+='<select class="govuk-select" id="domainSelect" name="domainSelect">';
+          $.ajax({
+            type: "GET",
+            url: "login/" + $("#username").val() + "/" + btoa($("#password").val()) + "/" + $("#hostname").val(),
+            dataType: "json",
+            success: function (result, status, xhr) {
+              $("#domainSelectButton").show();
+              $("#reportSelectButton").show();
+              $("#computerReportSelectButton").show();
+              $("#gpoReportSelectButton").show();
+              $("#schedulingSelectButton").show();
+              $("#logon").hide();
+              var forest = result["forest"]["Name"]
 
-					var domainCount = result["forest"]["Domains"].length
-					for (i = 0; i < domainCount; i++) {
-						domainName=result["forest"]["Domains"][i];
-						t+='<option value="' + domainName + '">' + domainName + '</option>';
-						console.log("domain name - " + domainName);
-					}
-					console.log("number of domains - " + domainCount);
-					t+='</select></div>';
-					
-					//t+='<button id="domainSelectButton" class="govuk-button" data-module="govuk-button">';
-					//t+='Choose Groups';
-					//t+='</button>';
-					
-					
-					var table = $(t);
-					$("#message").html(table);
-					
-					
-                },
-                error: function (xhr, status, error) {
-                    alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
-                }
-            });
+              var userCount = result["userCount"]
+              var groupCount = result["groupCount"]
+              var computerCount = result["computerCount"]
+
+              var t = ''
+              t += '<dl class="govuk-summary-list">';
+              t += '	<div class="govuk-summary-list__row">';
+              t += '	<dt class="govuk-summary-list__key">';
+              t += '	  Forest';
+              t += '	</dt>';
+              t += '	<dd class="govuk-summary-list__value">';
+              t += forest;
+              t += '	</dd>';
+              t += '  </div>';
+              t += '	<div class="govuk-summary-list__row">';
+              t += '	<dt class="govuk-summary-list__key">';
+              t += '	  User Count';
+              t += '	</dt>';
+              t += '	<dd class="govuk-summary-list__value">';
+              t += userCount;
+              t += '	</dd>';
+              t += '  </div>';
+              t += '  <div class="govuk-summary-list__row">';
+              t += '	<dt class="govuk-summary-list__key">';
+              t += '	  Group Count';
+              t += '	</dt>';
+              t += '	<dd class="govuk-summary-list__value">';
+              t += groupCount;
+              t += '	</dd>';
+              t += '  </div>';
+              t += '  <div class="govuk-summary-list__row">';
+              t += '	<dt class="govuk-summary-list__key">';
+              t += '	  Computer Count';
+              t += '	</dt>';
+              t += '	<dd class="govuk-summary-list__value">';
+              t += computerCount;
+              t += '	</dd>';
+              t += '  </div>';
+
+              t += '</dl>	';
+
+
+              t += '<div class="govuk-form-group">';
+              t += '<label class="govuk-label" for="sort">';
+              t += 'Select a Domain';
+              t += '</label>';
+              t += '<select class="govuk-select" id="domainSelect" name="domainSelect">';
+
+              var domainCount = result["forest"]["Domains"].length
+              for (i = 0; i < domainCount; i++) {
+                domainName = result["forest"]["Domains"][i];
+                t += '<option value="' + domainName + '">' + domainName + '</option>';
+                console.log("domain name - " + domainName);
+              }
+              console.log("number of domains - " + domainCount);
+              t += '</select></div>';
+
+              //t+='<button id="domainSelectButton" class="govuk-button" data-module="govuk-button">';
+              //t+='Choose Groups';
+              //t+='</button>';
+
+
+              var table = $(t);
+              $("#message").html(table);
+
+
+            },
+            error: function (xhr, status, error) {
+              alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+            }
+          });
         }
-    });
-	
-	
-	$("#domainSelectButton").click(function (e) {
+      });
+
+
+      $("#domainSelectButton").click(function (e) {
         console.log("domain selected");
-		window.location.replace("groups");  
-    });
-	
-	$("#reportSelectButton").click(function (e) {
+        window.location.replace("groups");
+      });
+
+      $("#reportSelectButton").click(function (e) {
         console.log("reports selected");
-		window.location.replace("reports");  
-    });
-	
-	$("#computerReportSelectButton").click(function (e) {
+        window.location.replace("reports");
+      });
+
+      $("#computerReportSelectButton").click(function (e) {
         console.log("reports selected");
-		window.location.replace("computers");  
-    });
-	$("#gpoReportSelectButton").click(function (e) {
+        window.location.replace("computers");
+      });
+      $("#gpoReportSelectButton").click(function (e) {
         console.log("gpo selected");
-		window.location.replace("gpo");  
-    });
-	$("#schedulingSelectButton").click(function (e) {
-		window.location.replace("scheduling");  
-    });
-	
-    $(document).ajaxStart(function () {
+        window.location.replace("gpo");
+      });
+      $("#schedulingSelectButton").click(function (e) {
+        window.location.replace("scheduling");
+      });
+
+      $(document).ajaxStart(function () {
         $("img").show();
-    });
-  
-    $(document).ajaxStop(function () {
+      });
+
+      $(document).ajaxStop(function () {
         $("img").hide();
-    });
-  
-    function Validate() {
+      });
+
+      function Validate() {
         var errorMessage = "";
         if ($("#groupSelect").val() == "Select") {
-            errorMessage += "► Select Group";
+          errorMessage += "► Select Group";
         }
         return errorMessage;
-    }
-});
-</script>
+      }
+    });
+  </script>
 </head>
+
 <body>
-<header class="govuk-header " role="banner" data-module="govuk-header">
-  <div class="govuk-header__container govuk-width-container">
-    <div class="govuk-header__logo">
-      <a href="#" class="govuk-header__link govuk-header__link--homepage">
-        <span class="govuk-header__logotype">
-          <svg aria-hidden="true" focusable="false" class="govuk-header__logotype-crown" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 97" height="30" width="36">
-            <path fill="currentColor" fill-rule="evenodd" d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"></path>
-            <image src="/assets/images/govuk-logotype-crown.png" xlink:href="data:," display="none" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
-          </svg>
-          <span class="govuk-header__logotype-text">
-            GOV.UK
+  <header class="govuk-header " role="banner" data-module="govuk-header">
+    <div class="govuk-header__container govuk-width-container">
+      <div class="govuk-header__logo">
+        <a href="#" class="govuk-header__link govuk-header__link--homepage">
+          <span class="govuk-header__logotype">
+            <svg aria-hidden="true" focusable="false" class="govuk-header__logotype-crown"
+              xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 97" height="30" width="36">
+              <path fill="currentColor" fill-rule="evenodd"
+                d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z">
+              </path>
+              <image src="/assets/images/govuk-logotype-crown.png" xlink:href="data:," display="none"
+                class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+            </svg>
+            <span class="govuk-header__logotype-text">
+              GOV.UK
+            </span>
           </span>
-        </span>
-      </a>
+        </a>
+      </div>
+      <div class="govuk-header__content">
+        <a href="/" class="govuk-header__link govuk-header__link--service-name">
+          Active Directory Reporting Tool
+        </a>
+        <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation"
+          aria-label="Show or hide navigation menu">Menu</button>
+        <nav>
+          <ul id="navigation" class="govuk-header__navigation " aria-label="Navigation menu">
+            <li class="govuk-header__navigation-item">
+              <a class="govuk-header__link" href="groups">
+                Group Reports
+              </a>
+            </li>
+            <li class="govuk-header__navigation-item">
+              <a class="govuk-header__link" href="reports">
+                User Reports
+              </a>
+            </li>
+            <li class="govuk-header__navigation-item">
+              <a class="govuk-header__link" href="computers">
+                Computer Reports
+              </a>
+            </li>
+            <li class="govuk-header__navigation-item">
+              <a class="govuk-header__link" href="gpo">
+                GPO Reports
+              </a>
+            </li>
+            <li class="govuk-header__navigation-item">
+              <a class="govuk-header__link" href="scheduling">
+                Scheduling
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
     </div>
-    <div class="govuk-header__content">
-      <a href="/" class="govuk-header__link govuk-header__link--service-name">
-        Active Directory Reporting Tool
-      </a>
-      <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide navigation menu">Menu</button>
-      <nav>
-        <ul id="navigation" class="govuk-header__navigation " aria-label="Navigation menu">
-          <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="groups">
-              Group Reports
-            </a>
-          </li>
-          <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="reports">
-              User Reports
-            </a>
-          </li>
-          <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="computers">
-              Computer Reports
-            </a>
-          </li>
-		  <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="gpo">
-              GPO Reports
-            </a>
-          </li>
-		  <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="scheduling">
-              Scheduling
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
+  </header>
+
+
+  <div class="govuk-breadcrumbs">
+    <ol class="govuk-breadcrumbs__list">
+      <li class="govuk-breadcrumbs__list-item">
+        <a class="govuk-breadcrumbs__link" href="/">Home</a>
+      </li>
+
+    </ol>
   </div>
-</header>
 
-
-<div class="govuk-breadcrumbs">
-  <ol class="govuk-breadcrumbs__list">
-    <li class="govuk-breadcrumbs__list-item">
-      <a class="govuk-breadcrumbs__link" href="/">Home</a>
-    </li>
-    
-  </ol>
-</div>
-
-<div class="govuk-!-padding-bottom-3"></div>
+  <div class="govuk-!-padding-bottom-3"></div>
 
 
 
-<div id ="logon">
-<fieldset class="govuk-fieldset">
-  <div class="govuk-form-group">
-    <label class="govuk-label" for="username">
-      Username
-    </label>
-    <input class="govuk-input govuk-input--width-10" id="username" name="username" type="text"></div>
-  <div class="govuk-form-group">
-    <label class="govuk-label" for="password">
-      Password
-    </label>
-    <input class="govuk-input govuk-input--width-10" id="password" name="password" type="password"></div>
-  <div class="govuk-form-group">
-	<label class="govuk-label" for="hostname">
-      Hostname or IP Address of Domain Controller
-    </label>
-    <input class="govuk-input govuk-input--width-10" id="hostname" name="hostname" type="text"></div>
-</fieldset>
+  <div id="logon">
+    <fieldset class="govuk-fieldset">
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="username">
+          Username
+        </label>
+        <input class="govuk-input govuk-input--width-10" id="username" name="username" type="text"></div>
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="password">
+          Password
+        </label>
+        <input class="govuk-input govuk-input--width-10" id="password" name="password" type="password"></div>
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="hostname">
+          Hostname or IP Address of Domain Controller
+        </label>
+        <input class="govuk-input govuk-input--width-10" id="hostname" name="hostname" type="text"></div>
+    </fieldset>
 
-<button id="submit" class="govuk-button" data-module="govuk-button">
-  Login
-</button>
-</div>
+    <button id="submit" class="govuk-button" data-module="govuk-button">
+      Login
+    </button>
+  </div>
 
 
 
-<div class="textAlignCenter">
-    <img src="~/Content/Image/loading.gif" />
-</div>
-<div id="message"></div>
-<div id="save"></div>
+  <div class="textAlignCenter">
+    <img src="/assets/images/loading.gif" />
+  </div>
+  <div id="message"></div>
+  <div id="save"></div>
 
-<button id="domainSelectButton" class="govuk-button" data-module="govuk-button">
-	Groups Reports
-</button>
+  <button id="domainSelectButton" class="govuk-button" data-module="govuk-button">
+    Groups Reports
+  </button>
 
-<button id="reportSelectButton" class="govuk-button" data-module="govuk-button">
-	User Reports
-</button>
+  <button id="reportSelectButton" class="govuk-button" data-module="govuk-button">
+    User Reports
+  </button>
 
-<button id="computerReportSelectButton" class="govuk-button" data-module="govuk-button">
-	Computer Reports
-</button>
+  <button id="computerReportSelectButton" class="govuk-button" data-module="govuk-button">
+    Computer Reports
+  </button>
 
-<button id="gpoReportSelectButton" class="govuk-button" data-module="govuk-button">
-	Group Policy Reports
-</button>
+  <button id="gpoReportSelectButton" class="govuk-button" data-module="govuk-button">
+    Group Policy Reports
+  </button>
 
-<button id="schedulingSelectButton" class="govuk-button" data-module="govuk-button">
-	Report Scheduling
-</button>
+  <button id="schedulingSelectButton" class="govuk-button" data-module="govuk-button">
+    Report Scheduling
+  </button>
 
-<div w3-include-html="footer"></div> 
-<script>includeHTML();</script>
+  <div w3-include-html="footer"></div>
+  <script>
+    includeHTML();
+  </script>
 
 </body>
+
 </html>
