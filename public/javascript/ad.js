@@ -10,11 +10,11 @@ function includeHTML() {
       /* Make an HTTP request using the attribute value as the file name: */
       const httpRequest = new XMLHttpRequest();
       httpRequest.onreadystatechange = function () {
-        if (this.readyState == 4) {
-          if (this.status == 200) {
+        if (this.readyState === 4) {
+          if (this.status === 200) {
             element.innerHTML = this.responseText;
           }
-          if (this.status == 404) {
+          if (this.status === 404) {
             element.innerHTML = "Page not found.";
           }
           /* Remove the attribute, and call this function once more: */

@@ -1,4 +1,5 @@
-<html lang="en" class="govuk-template ">
+<!DOCTYPE html>
+<html lang="en" class="govuk-template">
 
 <head>
 	<title>Active Directory Audit Tool</title>
@@ -6,204 +7,194 @@
 	<script src="/javascript/jquery.min.js"></script>
 	<script src="/javascript/ad.js"></script>
 	<script>
-		$(document).ready(function () {
-			var csvData = null;
+		$(function () {
+			let csvData = null;
 
-			$("#showGroups").hide();
-			$("#saveCSVDiv").hide();
-			$("#loading").hide();
+			$('#showGroups').hide();
+			$('#saveCSVDiv').hide();
+			$('#loading').hide();
 
-			$("#discover").click(function (e) {
-				$("#saveCSVDiv").hide();
-				var validate = Validate();
-				$("#message").html(validate);
-				if (validate.length == 0) {
+			$('#discover').click(function () {
+				$('#saveCSVDiv').hide();
+				const validateResult = validate();
+				$('#message').html(validateResult);
+				if (validateResult.length === 0) {
 					$.ajax({
-						type: "GET",
-						url: "discovergroups/" + $("#groupSelect").val(),
-						dataType: "json",
+						type: 'GET',
+						url: `discovergroups/${$('#groupSelect').val()}`,
+						dataType: 'json',
 						success: function (result, status, xhr) {
-							if (result["groups"] == "null") {
-								window.location.replace("/");
+							if (result['groups'] === 'null') {
+								window.location.replace('/');
 							}
 
-							var t = '<table class="govuk-table">';
-							t += '<caption class="govuk-table__caption">Groups</caption>';
-							t += '<thead class="govuk-table__head">';
-							t += '<tr class="govuk-table__row">';
-							t += '<th scope="col" class="govuk-table__header">Name</th>';
-							t += '<th scope="col" class="govuk-table__header">Users</th>';
-							t += '<th scope="col" class="govuk-table__header">Select</th>';
-							t += '</tr></thead>';
+							let htmlOutput = '<table class="govuk-table">';
+							htmlOutput +=
+								'<caption class="govuk-table__caption">Groups</caption>';
+							htmlOutput += '<thead class="govuk-table__head">';
+							htmlOutput += '<tr class="govuk-table__row">';
+							htmlOutput += '<th scope="col" class="govuk-table__header">Name</th>';
+							htmlOutput +=
+								'<th scope="col" class="govuk-table__header">Users</th>';
+							htmlOutput +=
+								'<th scope="col" class="govuk-table__header">Select</th>';
+							htmlOutput += '</tr></thead>';
 
-							groupCount = result["groups"].length;
-							for (i = 0; i < groupCount; i++) {
-								t += '<tr class="govuk-table__row">';
-								groupName = result["groups"][i]["Groupname"];
-								parentGroups = result["groups"][i]["ParentGroups"];
-								groupID = "groupID" + i;
-								//t+="<td class='govuk-table__cell'>" + groupName + "</td><td class='govuk-table__cell'>" + result["groups"][i]["Membercount"] + "</td><td class='govuk-table__cell'>" + "<div class='govuk-checkboxes'><div class='govuk-checkboxes__item'><input class='govuk-checkboxes__input' type ='checkbox' id="+ groupID + " name="+ groupID + " value='" + groupName +"'><label class='govuk-label govuk-checkboxes__label' for="+ groupName +"></label></td>";
-								if (parentGroups == "") {
-									t += "<td class='govuk-table__cell'>" + groupName +
-										"</td><td class='govuk-table__cell'>" + result["groups"][
-											i]["Membercount"] +
-										"</td><td class='govuk-table__cell'>" +
-										"<div class='govuk-checkboxes'><div class='govuk-checkboxes__item'><input class='govuk-checkboxes__input' type ='checkbox' id=" +
-										groupID + " name=" + groupID + " value='" + groupName +
-										"'><label class='govuk-label govuk-checkboxes__label' for=" +
-										groupName + "></label></td>";
-
+							const groupCount = result['groups'].length;
+							for (let index = 0; index < groupCount; index++) {
+								htmlOutput += '<tr class="govuk-table__row">';
+								const groupName = result['groups'][index]['Groupname'];
+								const parentGroups = result['groups'][index]['ParentGroups'];
+								const groupID = `groupID${index}`;
+								// htmlOutput += `<td class="govuk-table__cell">${groupName}</td><td class="govuk-table__cell">${result['groups'][index]['Membercount']}</td><td class="govuk-table__cell"><div class="govuk-checkboxes"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" type="checkbox" id="${groupID}" name="${groupID}" value="${groupName}"><label class="govuk-label govuk-checkboxes__label" for="${groupName}"></label></td>`;
+								if (parentGroups === '') {
+									htmlOutput +=
+										`<td class="govuk-table__cell">${groupName}</td><td class="govuk-table__cell">${result['groups'][index]['Membercount']}</td><td class="govuk-table__cell"><div class="govuk-checkboxes"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" type="checkbox" id="${groupID}" name="${groupID}" value="${groupName}"><label class="govuk-label govuk-checkboxes__label" for="${groupName}"></label></td>`;
 								} else {
-									t += "<td class='govuk-table__cell'>" + groupName +
-										" (Member of : " + parentGroups +
-										")</td><td class='govuk-table__cell'>" + result["groups"][
-											i
-										]["Membercount"] + "</td><td class='govuk-table__cell'>" +
-										"<div class='govuk-checkboxes'><div class='govuk-checkboxes__item'><input class='govuk-checkboxes__input' type ='checkbox' id=" +
-										groupID + " name=" + groupID + " value='" + groupName +
-										"'><label class='govuk-label govuk-checkboxes__label' for=" +
-										groupName + "></label></td>";
+									htmlOutput +=
+										`<td class="govuk-table__cell">${groupName}" (Member of : ${parentGroups})</td><td class="govuk-table__cell">${result['groups'][index]['Membercount']}</td><td class="govuk-table__cell"><div class="govuk-checkboxes"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" type="checkbox" id="${groupID}" name="${groupID}" value="${groupName}"><label class="govuk-label govuk-checkboxes__label" for="${groupName}"></label></td>`;
 								}
 
-								t += '</tr>';
+								htmlOutput += '</tr>';
 							}
 
-							t += "</tbody></table>";
+							htmlOutput += '</tbody></table>';
 
-							$("#showGroups").show();
-							var table4 = $(t);
-							$("#message").html(table4);
-
+							$('#showGroups').show();
+							const table = $(htmlOutput);
+							$('#message').html(table);
 						},
 						error: function (xhr, status, error) {
-							alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr
-								.statusText)
+							alert(`Result: ${status} ${error} ${xhr.status} ${xhr.statusText}`);
 						}
 					});
 				}
 			});
 
+			$('#showGroups').click(function () {
+				$('#showGroups').hide();
+				$('#saveCSVDiv').hide();
 
-			$("#showGroups").click(function (e) {
-				$("#showGroups").hide();
-				$("#saveCSVDiv").hide();
+				const groupArray = [];
 
-				var groupArray = [];
-
-				for (i = 0; i < groupCount; i++) {
-					groupID = "groupID" + i;
-					if ($("#groupID" + i).is(':checked')) {
-						//console.log($("#groupID"+i).val());
-						groupArray.push($("#groupID" + i).val());
+				for (let index = 0; index < groupCount; index++) {
+					const groupID = `groupID${index}`;
+					if ($(`#${groupID}`).is(':checked')) {
+						// console.log($(`#${groupID}`).val());
+						groupArray.push($(`#${groupID}`).val());
 					}
 				}
 
 				groupArray.forEach(function (group, index) {
-					//console.log(group);
+					// console.log(group);
 				});
-				//console.log(groupArray);
-				var validate = Validate();
-				$("#message").html(validate);
-				if (validate.length == 0) {
+				// console.log(groupArray);
+				const validateResult = validate();
+				$('#message').html(validateResult);
+				if (validateResult.length === 0) {
 					$.ajax({
-						type: "GET",
-						url: "groups/" + groupArray,
-						dataType: "json",
+						type: 'GET',
+						url: `groups/${groupArray}`,
+						dataType: 'json',
 						success: function (result, status, xhr) {
-
-
-							var data = [];
-							var t = '<h2 class="govuk-heading-l">Group Membership</h2>';
-							var userDetails = ["Group Name", "Username", "Group Type",
-								"Last Logon"
+							const data = [];
+							let htmlOutput = '<h2 class="govuk-heading-l">Group Membership</h2>';
+							const userDetails = ['Group Name', 'Username', 'Group Type',
+								'Last Logon'
 							];
 							data.push(userDetails);
 
-							for (i = 0; i < result["users"].length; i++) {
-								var groupName = result["users"][i]["GroupName"];
-								console.log("Group=" + groupName);
-								t += '<table class="govuk-table">';
-								t += '<caption class="govuk-table__caption">Group = ' +
-									groupName + '</caption>';
-								t += '<thead class="govuk-table__head">';
-								t += '<tr class="govuk-table__row">';
-								t += '<th scope="col" class="govuk-table__header">Name</th>';
-								t += '<th scope="col" class="govuk-table__header">Type</th>';
-								t +=
-								'<th scope="col" class="govuk-table__header">Last Logon</th>';
-								t += '</tr></thead>';
+							for (let index = 0; index < result['users'].length; index++) {
+								const groupName = result['users'][index]['GroupName'];
+								console.log(`Group=${groupName}`);
+								htmlOutput += '<table class="govuk-table">';
+								htmlOutput +=
+									`<caption class="govuk-table__caption">Group = ${groupName}</caption>`;
+								htmlOutput += '<thead class="govuk-table__head">';
+								htmlOutput += '<tr class="govuk-table__row">';
+								htmlOutput +=
+									'<th scope="col" class="govuk-table__header">Name</th>';
+								htmlOutput +=
+									'<th scope="col" class="govuk-table__header">Type</th>';
+								htmlOutput +=
+									'<th scope="col" class="govuk-table__header">Last Logon</th>';
+								htmlOutput += '</tr></thead>';
 
-								var logon = "";
+								let logon = '';
 
-								for (j = 0; j < result["users"][i]["Group"].length; j++) {
-									console.log("UserName=" + result["users"][i]["Group"][j][
-										"Username"
+								for (let index2 = 0; index2 < result['users'][index]['Group']
+									.length; index2++) {
+									console.log('UserName=' + result['users'][index]['Group'][
+										index2
+									][
+										'Username'
 									]);
 									try {
-										var utcSeconds = parseInt((result["users"][i]["Group"][j][
-											"LastLogonDate"
+										const utcSeconds = parseInt((result['users'][index][
+											'Group'
+										][index2][
+											'LastLogonDate'
 										]).substring(6, 19));
 										logon = new Date(utcSeconds);
 									} catch {
-										logon = "";
+										logon = '';
 									}
 
-									var username = result["users"][i]["Group"][j]["Username"];
-									var groupType = result["users"][i]["Group"][j]["Type"];
+									const username = result['users'][index]['Group'][index2][
+										'Username'
+									];
+									const groupType = result['users'][index]['Group'][index2][
+										'Type'
+									];
 									userDetails = [groupName, username, groupType, logon];
 									data.push(userDetails);
 
-									t += '<tr class="govuk-table__row">';
-									t += "<td class='govuk-table__cell'>" + username +
-										"</td><td class='govuk-table__cell'>" + groupType +
-										"</td><td class='govuk-table__cell'>" + logon + "</td>";
-									t += '</tr>';
-
+									htmlOutput += '<tr class="govuk-table__row">';
+									htmlOutput +=
+										`<td class="govuk-table__cell">${username}</td><td class="govuk-table__cell">${groupType}</td><td class="govuk-table__cell">${logon}</td>`;
+									htmlOutput += '</tr>';
 								}
 
-								t += '</tbody></table>';
+								htmlOutput += '</tbody></table>';
 							}
 
+							const table = $(htmlOutput);
+							$('#message').html(table);
 
-							var table = $(t);
-							$("#message").html(table);
-
-							csvData = data.map(e => e.join(",")).join("\n");
-							$("#saveCSVDiv").show();
-							$("#downloadlink").hide();
+							csvData = data.map(entry => entry.join(',')).join('\n');
+							$('#saveCSVDiv').show();
+							$('#downloadlink').hide();
 
 						},
 						error: function (xhr, status, error) {
-							alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr
-								.statusText)
+							alert(`Result: ${status} ${error} ${xhr.status} ${xhr.statusText}`);
 						}
 					});
 				}
 			});
 
-			$("#saveCSVButton").click(function (e) {
-				saveCSVLocation = $("#saveLocation").val();
+			$('#saveCSVButton').click(function () {
+				saveCSVLocation = $('#saveLocation').val();
 				console.log(saveCSVLocation);
-				console.log("globalVar is " + csvData);
+				console.log('globalVar is ' + csvData);
 
-				var link = document.getElementById('downloadlink');
+				const link = document.getElementById('downloadlink');
 				link.href = makeTextFile(csvData);
-				$("#downloadlink").show();
+				$('#downloadlink').show();
 			});
 
 			$(document).ajaxStart(function () {
-				$("#loading").show();
-
+				$('#loading').show();
 			});
 
 			$(document).ajaxStop(function () {
-				$("#loading").hide();
+				$('#loading').hide();
 			});
 
-			function Validate() {
-				var errorMessage = "";
-				if ($("#groupSelect").val() == "Select") {
-					errorMessage += "► Select Group";
+			function validate() {
+				let errorMessage = '';
+				if ($('#groupSelect').val() === 'Select') {
+					errorMessage += '► Select Group';
 				}
 				return errorMessage;
 			}
@@ -212,8 +203,7 @@
 </head>
 
 <body>
-
-	<header class="govuk-header " role="banner" data-module="govuk-header">
+	<header class="govuk-header" role="banner" data-module="govuk-header">
 		<div class="govuk-header__container govuk-width-container">
 			<div class="govuk-header__logo">
 				<a href="#" class="govuk-header__link govuk-header__link--homepage">
@@ -271,7 +261,6 @@
 		</div>
 	</header>
 
-
 	<div class="govuk-breadcrumbs">
 		<ol class="govuk-breadcrumbs__list">
 			<li class="govuk-breadcrumbs__list-item">
@@ -284,7 +273,6 @@
 	</div>
 
 	<div class="govuk-!-padding-bottom-3"></div>
-
 
 	<div class="govuk-form-group">
 		<label class="govuk-label" for="sort">
@@ -300,7 +288,6 @@
 		Discover Groups
 	</button>
 
-
 	<div class="textAlignCenter" id="loading" name="loading">
 		<img src="/assets/images/loading.gif" />
 	</div>
@@ -308,23 +295,17 @@
 	<div id="message"></div>
 	<div id="save"></div>
 
-
-
 	<button id="showGroups" class="govuk-button" data-module="govuk-button">Show Group Membership</button>
-
 
 	<div class="govuk-form-group" id="saveCSVDiv">
 		<button id="saveCSVButton" class="govuk-button" data-module="govuk-button">Export to CSV</button>
 		<a download="groups.txt" class="govuk-link" id="downloadlink">Download</a>
 	</div>
 
-
 	<div w3-include-html="footer"></div>
 	<script>
 		includeHTML();
 	</script>
-
-
 </body>
 
 </html>

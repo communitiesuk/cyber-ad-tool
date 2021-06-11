@@ -1,4 +1,5 @@
-<html lang="en" class="govuk-template ">
+<!DOCTYPE html>
+<html lang="en" class="govuk-template">
 
 <head>
 	<title>Active Directory Reporting Tool</title>
@@ -7,159 +8,148 @@
 	<script src="/javascript/ad.js"></script>
 
 	<script>
-		$(document).ready(function () {
-			var csvData = null;
+		$(function () {
+			let csvData = null;
 
-			$("#showUsers").hide();
-			$("#saveCSVDiv").hide();
-			$("#daysFilter").hide();
-			$("#loading").hide();
-
+			$('#showUsers').hide();
+			$('#saveCSVDiv').hide();
+			$('#daysFilter').hide();
+			$('#loading').hide();
 
 			$.ajax({
-				type: "GET",
-				url: "getOu/domain",
-				dataType: "json",
+				type: 'GET',
+				url: 'getOu/domain',
+				dataType: 'json',
 				success: function (result, status, xhr) {
-					if (result["computers"] == "null") {
-						window.location.replace("/");
+					if (result['computers'] === 'null') {
+						window.location.replace('/');
 					}
 
+					let htmlOutput = '<option value="All">All</option>';
 
-					var t = '<option value="All">All</option>';
-
-
-					for (i = 0; i < result["ou"].length; i++) {
-						console.log(result["ou"][i]["Name"]);
-						var ou = result["ou"][i]["Name"]
-						var dn = result["ou"][i]["DistinguishedName"]
-						t += '<option value="' + dn + '">' + ou + '</option>';
+					for (let index = 0; index < result['ou'].length; index++) {
+						console.log(result['ou'][index]['Name']);
+						const ou = result['ou'][index]['Name']
+						const dn = result['ou'][index]['DistinguishedName']
+						htmlOutput += `<option value="${dn}">${ou}</option>`;
 					}
-					var ouSelect = $(t);
-					$("#ouSelect").html(ouSelect);
+					const ouSelect = $(htmlOutput);
+					$('#ouSelect').html(ouSelect);
 				}
 			});
 
+			$('#reportSelect').change(function () {
+				const reports = ['All GPOs'];
 
-			$("#reportSelect").change(function (e) {
-				var reports = ['All GPOs'];
-
-				if (reports.indexOf($("#reportSelect").val()) !== -1) {
-					$("#daysFilter").hide();
+				if (reports.indexOf($('#reportSelect').val()) !== -1) {
+					$('#daysFilter').hide();
 				} else {
-					$("#daysFilter").show();
+					$('#daysFilter').show();
 				}
 			});
 
-
-			$("#runReport").click(function (e) {
-				$("#showGroups").hide();
-				$("#saveCSVDiv").hide();
+			$('#runReport').click(function () {
+				$('#showGroups').hide();
+				$('#saveCSVDiv').hide();
 
 				$.ajax({
-					type: "GET",
-					url: "report/gpo/" + $("#reportSelect").val() + "/" + $("#daysSelect").val(),
-					dataType: "json",
+					type: 'GET',
+					url: `report/gpo/${$('#reportSelect').val()}/${$('#daysSelect').val()}`,
+					dataType: 'json',
 					success: function (result, status, xhr) {
-						if (result["computers"] == "null") {
-							window.location.replace("/");
+						if (result['computers'] === 'null') {
+							window.location.replace('/');
 						}
 
-
-
-						var data = [];
-						var t = '<h2 class="govuk-heading-l">' + $("#reportSelect").val() +
+						const data = [];
+						let htmlOutput = '<h2 class="govuk-heading-l">' + $('#reportSelect')
+						.val() +
 							'</h2>';
+						htmlOutput += '<table class="govuk-table">';
+						htmlOutput += '<thead class="govuk-table__head">';
+						htmlOutput += '<tr class="govuk-table__row">';
+						htmlOutput += '<th scope="col" class="govuk-table__header">Name</th>';
+						// htmlOutput += '<th scope="col" class="govuk-table__header">Description</th>';
+						htmlOutput += '</tr></thead>';
 
-						t += '<table class="govuk-table">';
-						t += '<thead class="govuk-table__head">';
-						t += '<tr class="govuk-table__row">';
-						t += '<th scope="col" class="govuk-table__header">Name</th>';
-						//t+='<th scope="col" class="govuk-table__header">Description</th>';
-						t += '</tr></thead>';
 
-
-						var userDetails = ["displayName", "owner", "domainName", "creationTime",
-							"modificationTime", "gpoStatus", "description"
+						const userDetails = ['displayName', 'owner', 'domainName', 'creationTime',
+							'modificationTime', 'gpoStatus', 'description'
 						];
 						data.push(userDetails);
-						var totalCount = 0;
-						for (i = 0; i < result["gpo"].length; i++) {
-							var displayName = result["gpo"][i]["DisplayName"];
-							var owner = result["gpo"][i]["Owner"];
-							var domainName = result["gpo"][i]["DomainName"];
-							var creationTime = parseDate(result["gpo"][i]["CreationTime"]);
-							var modificationTime = parseDate(result["gpo"][i][
-							"ModificationTime"]);
-							var gpoStatus = result["gpo"][i]["GpoStatus"];
-							var description = result["gpo"][i]["Description"];
-							var gpoDetail = result["gpo"][i]["GPODetail"];
+						let totalCount = 0;
+						for (let index = 0; index < result['gpo'].length; index++) {
+							const displayName = result['gpo'][index]['DisplayName'];
+							const owner = result['gpo'][index]['Owner'];
+							const domainName = result['gpo'][index]['DomainName'];
+							const creationTime = parseDate(result['gpo'][index]['CreationTime']);
+							const modificationTime = parseDate(result['gpo'][index][
+								'ModificationTime'
+							]);
+							const gpoStatus = result['gpo'][index]['GpoStatus'];
+							const description = result['gpo'][index]['Description'];
+							const gpoDetail = result['gpo'][index]['GPODetail'];
 
-							t += '<tr class="govuk-table__row">';
-							t += "<td class='govuk-table__cell'>";
-							t += '<details class="govuk-details" data-module="govuk-details">';
-							t += '<summary class="govuk-details__summary">';
-							t += '<span class="govuk-details__summary-text">';
-							t += displayName;
-							t += '</span>';
-							t += '</summary>';
-							t += '<div class="govuk-details__text">';
-							t += '<ul class="govuk-list govuk-list">';
-							/*
-							t+='<li><b>Owner</b>: ' + owner + '</li>';
-							t+='<li><b>Domain Name</b>: ' + domainName + '</li>';
-							t+='<li><b>Created</b>: ' + creationTime + '</li>';
-							t+='<li><b>Last Modified</b>: ' + modificationTime  + '</li>';
-							t+='<li><b>Status</b>: ' + gpoStatus + '</li>';
-							t+='<li>' + gpoDetail + '</li>';
-							
-							t+='</ul>';
-							*/
-							t += gpoDetail;
-							t += '</div>';
-							t += '</details>';
-							//t+="</td><td class='govuk-table__cell'>" + description + "</td>";
+							htmlOutput += '<tr class="govuk-table__row">';
+							htmlOutput += '<td class="govuk-table__cell">';
+							htmlOutput +=
+								'<details class="govuk-details" data-module="govuk-details">';
+							htmlOutput += '<summary class="govuk-details__summary">';
+							htmlOutput += '<span class="govuk-details__summary-text">';
+							htmlOutput += displayName;
+							htmlOutput += '</span>';
+							htmlOutput += '</summary>';
+							// htmlOutput += '<div class="govuk-details__text">';
+							// htmlOutput += '<ul class="govuk-list govuk-list">';
+							// htmlOutput += `<li><b>Owner</b>: ${owner}</li>`;
+							// htmlOutput += `<li><b>Domain Name</b>: ${domainName}</li>`;
+							// htmlOutput += `<li><b>Created</b>: ${creationTime}</li>`;
+							// htmlOutput += `<li><b>Last Modified</b>: ${modificationTime}</li>`;
+							// htmlOutput += `<li><b>Status</b>: ${gpoStatus}</li>`;
+							// htmlOutput += `<li>${gpoDetail}</li>`;
+							// htmlOutput += '</ul>';
+							htmlOutput += gpoDetail;
+							htmlOutput += '</div>';
+							htmlOutput += '</details>';
+							// htmlOutput += `</td><td class="govuk-table__cell">${description}</td>`;
 
-							t += '</tr>';
+							htmlOutput += '</tr>';
 							userDetails = [displayName, owner, domainName, creationTime,
 								modificationTime, gpoStatus, description
 							];
 							data.push(userDetails);
 
-
-
-
 							totalCount++;
 						}
-						t += "<tr><td>Total Count =  " + totalCount + "</td></tr>";
-						t += '</tbody></table>';
+						htmlOutput += `<tr><td>Total Count =  ${totalCount}</td></tr>`;
+						htmlOutput += '</tbody></table>';
 
-						var reportData = $(t);
-						$("#report").html(reportData);
+						const reportData = $(htmlOutput);
+						$('#report').html(reportData);
 
-						csvData = data.map(e => e.join(",")).join("\n");
-						$("#saveCSVDiv").show();
-						$("#downloadlink").hide();
+						csvData = data.map(entry => entry.join(',')).join('\n');
+						$('#saveCSVDiv').show();
+						$('#downloadlink').hide();
 					},
 					error: function (xhr, status, error) {
-						alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr
-							.statusText)
+						alert(`Result: ${status} ${error} ${xhr.status} ${xhr.statusText}`);
 					}
 				});
 			});
 
-			$("#saveCSVButton").click(function (e) {
-				saveCSVLocation = $("#saveLocation").val();
-				var link = document.getElementById('downloadlink');
+			$('#saveCSVButton').click(function () {
+				saveCSVLocation = $('#saveLocation').val();
+				const link = document.getElementById('downloadlink');
 				link.href = makeTextFile(csvData);
-				$("#downloadlink").show();
+				$('#downloadlink').show();
 			});
+
 			$(document).ajaxStart(function () {
-				$("#loading").show();
+				$('#loading').show();
 			});
 
 			$(document).ajaxStop(function () {
-				$("#loading").hide();
+				$('#loading').hide();
 			});
 
 		});
@@ -167,8 +157,7 @@
 </head>
 
 <body>
-
-	<header class="govuk-header " role="banner" data-module="govuk-header">
+	<header class="govuk-header" role="banner" data-module="govuk-header">
 		<div class="govuk-header__container govuk-width-container">
 			<div class="govuk-header__logo">
 				<a href="#" class="govuk-header__link govuk-header__link--homepage">
@@ -226,7 +215,6 @@
 		</div>
 	</header>
 
-
 	<div class="govuk-breadcrumbs">
 		<ol class="govuk-breadcrumbs__list">
 			<li class="govuk-breadcrumbs__list-item">
@@ -240,7 +228,6 @@
 
 	<div class="govuk-!-padding-bottom-3"></div>
 
-
 	<div class="govuk-form-group">
 		<label class="govuk-label" for="sort">
 			Select a Report
@@ -250,9 +237,6 @@
 			<option value="Recently Created GPOs">Recently Created GPOs</option>
 		</select>
 	</div>
-
-
-
 
 	<div id="daysFilter" class="govuk-form-group">
 		<label class="govuk-label" for="width-3">

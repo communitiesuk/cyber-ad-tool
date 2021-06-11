@@ -1,4 +1,5 @@
-<html lang="en" class="govuk-template ">
+<!DOCTYPE html>
+<html lang="en" class="govuk-template">
 
 <head>
   <title>Active Directory Audit Tool</title>
@@ -6,51 +7,43 @@
   <script src="/javascript/jquery.min.js"></script>
   <script src="/javascript/ad.js"></script>
   <script>
-    $(document).ready(function () {
-      $("#status").hide();
-      $("#submit").click(function (e) {
-        var validate = Validate();
-        $("#errorMessage").html(validate);
-        if (validate.length == 0) {
+    $(function () {
+      $('#status').hide();
+      $('#submit').click(function () {
+        const validateResult = validate();
+        $('#errorMessage').html(validateResult);
+        if (validateResult.length === 0) {
           $.ajax({
-            type: "GET",
-
-            url: "scheduleReport/" + $("#reportSelect").val() + "/" + $("#daysSelect").val() + "/" + $(
-                "#fromEmailAddress").val() + "/" + $("#emailRecipients").val() + "/" + $("#frequency")
-            .val() + "/" + $("#smtpserver").val(),
-            //url: "scheduleReport/All Users",  
-            dataType: "json",
+            type: 'GET',
+            url: `scheduleReport/${$('#reportSelect').val()}/${$('#daysSelect').val()}/${$('#fromEmailAddress').val()}/${$('#emailRecipients').val()}/${$('#frequency').val()}/${$('#smtpserver').val()}`,
+            // url: 'scheduleReport/All Users',  
+            dataType: 'json',
             success: function (result, status, xhr) {
-
-              var t = "SUCCESS";
-              var reportData = $(t);
-              //$("#status").html(reportData);	
-              $("#status").show();
-
+              const t = 'SUCCESS';
+              const reportData = $(t);
+              // $('#status').html(reportData);	
+              $('#status').show();
             },
             error: function (xhr, status, error) {
-              alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+              alert(`Result: ${status} ${error} ${xhr.status} ${xhr.statusText}`);
             }
           });
         }
       });
 
-
-
-
-      function Validate() {
-        var errorMessage = "";
-        if ($("#smtpserver").val() == "") {
+      function validate() {
+        let errorMessage = '';
+        if ($('#smtpserver').val() === '') {
           errorMessage +=
-            "<span class='govuk-error-message'><span class='govuk-visually-hidden'>Error:</span>&nbsp;&nbsp;&nbsp;Please input STMP server</span>";
+            '<span class="govuk-error-message"><span class="govuk-visually-hidden">Error: Please input SMTP server</span>';
         }
-        if ($("#fromEmailAddress").val() == "") {
+        if ($('#fromEmailAddress').val() === '') {
           errorMessage +=
-            "<span class='govuk-error-message'><span class='govuk-visually-hidden'>Error:</span>&nbsp;&nbsp;&nbsp;Please input from email address</span>";
+            '<span class="govuk-error-message"><span class="govuk-visually-hidden">Error: Please input from email address</span>';
         }
-        if ($("#emailRecipients").val() == "") {
+        if ($('#emailRecipients').val() === '') {
           errorMessage +=
-            "<span class='govuk-error-message'><span class='govuk-visually-hidden'>Error:</span>&nbsp;&nbsp;&nbsp;Please input email recipients</span>";
+            '<span class="govuk-error-message"><span class="govuk-visually-hidden">Error: Please input email recipients</span>';
         }
         return errorMessage;
       }
@@ -116,10 +109,6 @@
       </div>
     </div>
   </header>
-
-
-
-
 
   <div class="govuk-breadcrumbs">
     <ol class="govuk-breadcrumbs__list">
@@ -188,9 +177,6 @@
             SMTP Server
           </label>
           <input class="govuk-input govuk-input--width-20" id="smtpserver" name="smtpserver" type="text"></div>
-
-
-
       </div>
     </div>
     <div class="govuk-grid-column-one-half">
@@ -200,25 +186,15 @@
         </label>
         <input class="govuk-input govuk-input--width-20" id="fromEmailAddress" name="fromEmailAddress" type="text">
       </div>
-
-
       <div class="govuk-form-group">
         <label class="govuk-label" for="emailRecipients">
           List of email recipients
         </label>
         <textarea class="govuk-textarea" id="emailRecipients" name="more-detail" rows="5"></textarea>
-
       </div>
     </div>
 
-
-
-
-
-
-
     <!-- TODO use conditional checkboxes. need to check javascript-->
-
 
     <button id="submit" class="govuk-button" data-module="govuk-button">
       Schedule Report
@@ -247,7 +223,7 @@
     <script>
       includeHTML();
     </script>
-
+  </div>
 </body>
 
 </html>

@@ -1,4 +1,5 @@
-<html lang="en" class="govuk-template ">
+<!DOCTYPE html>
+<html lang="en" class="govuk-template">
 
 <head>
   <title>Active Directory Audit Tool</title>
@@ -6,140 +7,133 @@
   <script src="/javascript/jquery.min.js"></script>
   <script src="/javascript/ad.js"></script>
   <script>
-    $(document).ready(function () {
-      $("#domainSelectButton").hide();
-      $("#reportSelectButton").hide();
-      $("#computerReportSelectButton").hide();
-      $("#gpoReportSelectButton").hide();
-      $("#schedulingSelectButton").hide();
+    $(function () {
+      $('#domainSelectButton').hide();
+      $('#reportSelectButton').hide();
+      $('#computerReportSelectButton').hide();
+      $('#gpoReportSelectButton').hide();
+      $('#schedulingSelectButton').hide();
 
-
-      $("#submit").click(function (e) {
-        var validate = Validate();
-        $("#message").html(validate);
-        if (validate.length == 0) {
+      $('#submit').click(function () {
+        const validateResult = validate();
+        $('#message').html(validateResult);
+        if (validateResult.length === 0) {
           $.ajax({
-            type: "GET",
-            url: "login/" + $("#username").val() + "/" + btoa($("#password").val()) + "/" + $("#hostname").val(),
-            dataType: "json",
+            type: 'GET',
+            url: `login/${$('#username').val()}/${btoa($('#password').val())}/${$('#hostname').val()}`,
+            dataType: 'json',
             success: function (result, status, xhr) {
-              $("#domainSelectButton").show();
-              $("#reportSelectButton").show();
-              $("#computerReportSelectButton").show();
-              $("#gpoReportSelectButton").show();
-              $("#schedulingSelectButton").show();
-              $("#logon").hide();
-              var forest = result["forest"]["Name"]
+              $('#domainSelectButton').show();
+              $('#reportSelectButton').show();
+              $('#computerReportSelectButton').show();
+              $('#gpoReportSelectButton').show();
+              $('#schedulingSelectButton').show();
+              $('#logon').hide();
 
-              var userCount = result["userCount"]
-              var groupCount = result["groupCount"]
-              var computerCount = result["computerCount"]
+              const forest = result['forest']['Name']
+              const userCount = result['userCount']
+              const groupCount = result['groupCount']
+              const computerCount = result['computerCount']
 
-              var t = ''
-              t += '<dl class="govuk-summary-list">';
-              t += '	<div class="govuk-summary-list__row">';
-              t += '	<dt class="govuk-summary-list__key">';
-              t += '	  Forest';
-              t += '	</dt>';
-              t += '	<dd class="govuk-summary-list__value">';
-              t += forest;
-              t += '	</dd>';
-              t += '  </div>';
-              t += '	<div class="govuk-summary-list__row">';
-              t += '	<dt class="govuk-summary-list__key">';
-              t += '	  User Count';
-              t += '	</dt>';
-              t += '	<dd class="govuk-summary-list__value">';
-              t += userCount;
-              t += '	</dd>';
-              t += '  </div>';
-              t += '  <div class="govuk-summary-list__row">';
-              t += '	<dt class="govuk-summary-list__key">';
-              t += '	  Group Count';
-              t += '	</dt>';
-              t += '	<dd class="govuk-summary-list__value">';
-              t += groupCount;
-              t += '	</dd>';
-              t += '  </div>';
-              t += '  <div class="govuk-summary-list__row">';
-              t += '	<dt class="govuk-summary-list__key">';
-              t += '	  Computer Count';
-              t += '	</dt>';
-              t += '	<dd class="govuk-summary-list__value">';
-              t += computerCount;
-              t += '	</dd>';
-              t += '  </div>';
+              let htmlOutput = ''
+              htmlOutput += '<dl class="govuk-summary-list">';
+              htmlOutput += '<div class="govuk-summary-list__row">';
+              htmlOutput += '<dt class="govuk-summary-list__key">';
+              htmlOutput += 'Forest';
+              htmlOutput += '</dt>';
+              htmlOutput += '<dd class="govuk-summary-list__value">';
+              htmlOutput += forest;
+              htmlOutput += '</dd>';
+              htmlOutput += '</div>';
+              htmlOutput += '<div class="govuk-summary-list__row">';
+              htmlOutput += '<dt class="govuk-summary-list__key">';
+              htmlOutput += 'User Count';
+              htmlOutput += '</dt>';
+              htmlOutput += '<dd class="govuk-summary-list__value">';
+              htmlOutput += userCount;
+              htmlOutput += '</dd>';
+              htmlOutput += '</div>';
+              htmlOutput += '<div class="govuk-summary-list__row">';
+              htmlOutput += '<dt class="govuk-summary-list__key">';
+              htmlOutput += 'Group Count';
+              htmlOutput += '</dt>';
+              htmlOutput += '<dd class="govuk-summary-list__value">';
+              htmlOutput += groupCount;
+              htmlOutput += '</dd>';
+              htmlOutput += '</div>';
+              htmlOutput += '<div class="govuk-summary-list__row">';
+              htmlOutput += '<dt class="govuk-summary-list__key">';
+              htmlOutput += 'Computer Count';
+              htmlOutput += '</dt>';
+              htmlOutput += '<dd class="govuk-summary-list__value">';
+              htmlOutput += computerCount;
+              htmlOutput += '</dd>';
+              htmlOutput += '</div>';
+              htmlOutput += '</dl>	';
+              htmlOutput += '<div class="govuk-form-group">';
+              htmlOutput += '<label class="govuk-label" for="sort">';
+              htmlOutput += 'Select a Domain';
+              htmlOutput += '</label>';
+              htmlOutput += '<select class="govuk-select" id="domainSelect" name="domainSelect">';
 
-              t += '</dl>	';
-
-
-              t += '<div class="govuk-form-group">';
-              t += '<label class="govuk-label" for="sort">';
-              t += 'Select a Domain';
-              t += '</label>';
-              t += '<select class="govuk-select" id="domainSelect" name="domainSelect">';
-
-              var domainCount = result["forest"]["Domains"].length
-              for (i = 0; i < domainCount; i++) {
-                domainName = result["forest"]["Domains"][i];
-                t += '<option value="' + domainName + '">' + domainName + '</option>';
-                console.log("domain name - " + domainName);
+              const domainCount = result['forest']['Domains'].length
+              for (let index = 0; index < domainCount; index++) {
+                const domainName = result['forest']['Domains'][index];
+                htmlOutput += `<option value="${domainName}">${domainName}</option>`;
+                console.log(`domain name - ${domainName}`);
               }
-              console.log("number of domains - " + domainCount);
-              t += '</select></div>';
+              console.log(`number of domains - ${domainCount}`);
+              htmlOutput += '</select></div>';
 
-              //t+='<button id="domainSelectButton" class="govuk-button" data-module="govuk-button">';
-              //t+='Choose Groups';
-              //t+='</button>';
+              // htmlOutput +=
+              //   '<button id="domainSelectButton" class="govuk-button" data-module="govuk-button">';
+              // htmlOutput += 'Choose Groups';
+              // htmlOutput += '</button>';
 
-
-              var table = $(t);
-              $("#message").html(table);
-
-
+              const table = $(htmlOutput);
+              $('#message').html(table);
             },
             error: function (xhr, status, error) {
-              alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+              alert(`Result: ${status} ${error} ${xhr.status} ${xhr.statusText}`);
             }
           });
         }
       });
 
-
-      $("#domainSelectButton").click(function (e) {
-        console.log("domain selected");
-        window.location.replace("groups");
+      $('#domainSelectButton').click(function () {
+        console.log('domain selected');
+        window.location.replace('groups');
       });
 
-      $("#reportSelectButton").click(function (e) {
-        console.log("reports selected");
-        window.location.replace("reports");
+      $('#reportSelectButton').click(function () {
+        console.log('reports selected');
+        window.location.replace('reports');
       });
 
-      $("#computerReportSelectButton").click(function (e) {
-        console.log("reports selected");
-        window.location.replace("computers");
+      $('#computerReportSelectButton').click(function () {
+        console.log('reports selected');
+        window.location.replace('computers');
       });
-      $("#gpoReportSelectButton").click(function (e) {
-        console.log("gpo selected");
-        window.location.replace("gpo");
+      $('#gpoReportSelectButton').click(function () {
+        console.log('gpo selected');
+        window.location.replace('gpo');
       });
-      $("#schedulingSelectButton").click(function (e) {
-        window.location.replace("scheduling");
+      $('#schedulingSelectButton').click(function () {
+        window.location.replace('scheduling');
       });
 
       $(document).ajaxStart(function () {
-        $("img").show();
+        $('img').show();
       });
 
       $(document).ajaxStop(function () {
-        $("img").hide();
+        $('img').hide();
       });
 
-      function Validate() {
-        var errorMessage = "";
-        if ($("#groupSelect").val() == "Select") {
-          errorMessage += "► Select Group";
+      function validate() {
+        let errorMessage = '';
+        if ($('#groupSelect').val() == 'Select') {
+          errorMessage += '► Select Group';
         }
         return errorMessage;
       }
@@ -148,7 +142,7 @@
 </head>
 
 <body>
-  <header class="govuk-header " role="banner" data-module="govuk-header">
+  <header class="govuk-header" role="banner" data-module="govuk-header">
     <div class="govuk-header__container govuk-width-container">
       <div class="govuk-header__logo">
         <a href="#" class="govuk-header__link govuk-header__link--homepage">
@@ -206,7 +200,6 @@
     </div>
   </header>
 
-
   <div class="govuk-breadcrumbs">
     <ol class="govuk-breadcrumbs__list">
       <li class="govuk-breadcrumbs__list-item">
@@ -217,8 +210,6 @@
   </div>
 
   <div class="govuk-!-padding-bottom-3"></div>
-
-
 
   <div id="logon">
     <fieldset class="govuk-fieldset">
@@ -243,8 +234,6 @@
       Login
     </button>
   </div>
-
-
 
   <div class="textAlignCenter">
     <img src="/assets/images/loading.gif" />
@@ -276,7 +265,6 @@
   <script>
     includeHTML();
   </script>
-
 </body>
 
 </html>

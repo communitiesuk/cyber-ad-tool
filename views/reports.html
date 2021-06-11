@@ -1,4 +1,5 @@
-<html lang="en" class="govuk-template ">
+<!DOCTYPE html>
+<html lang="en" class="govuk-template">
 
 <head>
 	<title>Active Directory Reporting Tool</title>
@@ -7,16 +8,16 @@
 	<script src="/javascript/ad.js"></script>
 
 	<script>
-		$(document).ready(function () {
-			var csvData = null;
+		$(function () {
+			let csvData = null;
 
-			$("#showUsers").hide();
-			$("#saveCSVDiv").hide();
-			$("#daysFilter").hide();
-			$("#loading").hide();
+			$('#showUsers').hide();
+			$('#saveCSVDiv').hide();
+			$('#daysFilter').hide();
+			$('#loading').hide();
 
-			$("#reportSelect").change(function (e) {
-				var reports = ['All Users', 'Users Never Logged On', 'Locked Out Users', 'Disabled Users',
+			$('#reportSelect').change(function () {
+				const reports = ['All Users', 'Users Never Logged On', 'Locked Out Users', 'Disabled Users',
 					'Account Expired Users', 'Members of Domain Local Administrators Group',
 					'Members of Domain Admins Group', 'Users in more than one group',
 					'Users with logon script', 'Users without logon script', 'Disabled users',
@@ -24,156 +25,155 @@
 					'Users with non restricted logon times', 'Admin users with expired passwords'
 				];
 
-				if (reports.indexOf($("#reportSelect").val()) !== -1) {
-					$("#daysFilter").hide();
+				if (reports.indexOf($('#reportSelect').val()) !== -1) {
+					$('#daysFilter').hide();
 				} else {
-					$("#daysFilter").show();
+					$('#daysFilter').show();
 				}
 			});
 
-			$("#runReport").click(function (e) {
-				$("#showGroups").hide();
-				$("#saveCSVDiv").hide();
+			$('#runReport').click(function () {
+				$('#showGroups').hide();
+				$('#saveCSVDiv').hide();
 
 				$.ajax({
-					type: "GET",
-					url: "report/" + $("#reportSelect").val() + "/" + $("#daysSelect").val() + "/" +
-						$("#quickQuery").is(':checked'),
-					dataType: "json",
+					type: 'GET',
+					url: `report/${$('#reportSelect').val()}/${$('#daysSelect').val()}/${$('#quickQuery').is(':checked')}`,
+					dataType: 'json',
 					success: function (result, status, xhr) {
-						if (result["users"] == "null") {
-							window.location.replace("/");
+						if (result['users'] === 'null') {
+							window.location.replace('/');
 						}
 
+						const queryTime = (result['queryTime'])
+						const data = [];
 
-						var queryTime = (result["queryTime"])
-						var data = [];
-						var t = '<h2 class="govuk-heading-l">' + $("#reportSelect").val() +
-							'</h2>';
+						let htmlOutput =
+							`<h2 class="govuk-heading-l">${$('#reportSelect').val()}</h2>`;
+						htmlOutput += '<table class="govuk-table">';
+						htmlOutput += '<thead class="govuk-table__head">';
+						htmlOutput += '<tr class="govuk-table__row">';
+						htmlOutput += '<th scope="col" class="govuk-table__header">Name</th>';
+						// htmlOutput +=
+						// 	'<th scope="col" class="govuk-table__header">Last Logon</th>';
+						htmlOutput += '<th scope="col" class="govuk-table__header">Disable</th>';
+						htmlOutput += '</tr></thead>';
 
-						t += '<table class="govuk-table">';
-						t += '<thead class="govuk-table__head">';
-						t += '<tr class="govuk-table__row">';
-						t += '<th scope="col" class="govuk-table__header">Name</th>';
-						t += '<th scope="col" class="govuk-table__header">Last Logon</th>';
-						//t+='<th scope="col" class="govuk-table__header">Disable</th>';
-						t += '</tr></thead>';
-
-						var userDetails = ["Username", "distinguishedName", "objectGuid",
-							"badLogonCount", "created", "deleted", "enabled", "lockedOut",
-							"passwordLastSet", "passwordExpired", "passwordNeverExpires",
-							"Last Logon", "Membe of"
+						const userDetails = ['Username', 'distinguishedName', 'objectGuid',
+							'badLogonCount', 'created', 'deleted', 'enabled', 'lockedOut',
+							'passwordLastSet', 'passwordExpired', 'passwordNeverExpires',
+							'Last Logon', 'Membe of'
 						];
+
 						data.push(userDetails);
-						var userId = "";
-						userCount = result["users"].length;
+						const userCount = result['users'].length;
 
-						for (i = 0; i < userCount; i++) {
-							userId = "userID" + i;
-							var userName = result["users"][i]["Username"];
-							logon = parseDate(result["users"][i]["LastLogonDate"])
-							var username = result["users"][i]["Username"];
-							var memberOf = result["users"][i]["MemberOf"];
-							var dn = result["users"][i]["DistinguishedName"];
-							var distinguishedName = dn.replace(/,/g, ";");
-							var objectGuid = result["users"][i]["ObjectGuid"];
-							var badLogonCount = result["users"][i]["BadLogonCount"];
-							var created = parseDate(result["users"][i]["Created"]);
-							var deleted = result["users"][i]["Deleted"];
-							var enabled = result["users"][i]["Enabled"];
-							var lockedOut = result["users"][i]["LockedOut"];
-							var passwordLastSet = parseDate(result["users"][i][
-							"PasswordLastSet"]);
-							var passwordExpired = result["users"][i]["PasswordExpired"];
-							var passwordNeverExpires = result["users"][i]["PasswordNeverExpires"];
-							var accountExpirationDate = result["users"][i][
-								"AccountExpirationDate"];
+						for (let index = 0; index < userCount; index++) {
+							const userId = `userID${index}`;
+							const userName = result['users'][index]['Username'];
+							const logon = parseDate(result['users'][index]['LastLogonDate'])
+							const username = result['users'][index]['Username'];
+							const memberOf = result['users'][index]['MemberOf'];
+							const dn = result['users'][index]['DistinguishedName'];
+							const distinguishedName = dn.replace(/,/g, ';');
+							const objectGuid = result['users'][index]['ObjectGuid'];
+							const badLogonCount = result['users'][index]['BadLogonCount'];
+							const created = parseDate(result['users'][index]['Created']);
+							const deleted = result['users'][index]['Deleted'];
+							const enabled = result['users'][index]['Enabled'];
+							const lockedOut = result['users'][index]['LockedOut'];
+							const passwordLastSet = parseDate(result['users'][index][
+								'PasswordLastSet'
+							]);
+							const passwordExpired = result['users'][index]['PasswordExpired'];
+							const passwordNeverExpires = result['users'][index][
+								'PasswordNeverExpires'
+							];
+							const accountExpirationDate = result['users'][index][
+								'AccountExpirationDate'
+							];
+							const SamAccountName = result['users'][index]['SamAccountName'];
 
-							var SamAccountName = result["users"][i]["SamAccountName"];
-
-							t += '<tr class="govuk-table__row">';
-							t += "<td class='govuk-table__cell'>";
-							t += '<details class="govuk-details" data-module="govuk-details">';
-							t += '<summary class="govuk-details__summary">';
-							t += '<span class="govuk-details__summary-text">';
-							t += username;
-							t += '</span>';
-							t += '</summary>';
-							t += '<div class="govuk-details__text">';
-							t += '<ul class="govuk-list govuk-list">';
-							t += '<li><b>Distinguished Name</b>: ' + result["users"][i][
-								"DistinguishedName"
-							] + '</li>';
-							t += '<li><b>Object Guid</b>: ' + result["users"][i]["ObjectGuid"] +
-								'</li>';
-							t += '<li><b>BadLogonCount</b>: ' + result["users"][i][
-								"BadLogonCount"] + '</li>';
-							t += '<li><b>Created</b>: ' + parseDate(result["users"][i][
-								"Created"]) + '</li>';
-							t += '<li><b>Deleted</b>: ' + result["users"][i]["Deleted"] + '</li>';
-							t += '<li><b>Enabled</b>: ' + result["users"][i]["Enabled"] + '</li>';
-							t += '<li><b>LockedOut</b>: ' + result["users"][i]["LockedOut"] +
-								'</li>';
-							t += '<li><b>PasswordLastSet</b>: ' + parseDate(result["users"][i][
-								"PasswordLastSet"
-							]) + '</li>';
-							t += '<li><b>PasswordExpired</b>: ' + result["users"][i][
-								"PasswordExpired"
-							] + '</li>';
-							t += '<li><b>PasswordNeverExpires</b>: ' + result["users"][i][
-								"PasswordNeverExpires"
-							] + '</li>';
-							t += '<li><b>AccountExpires</b>: ' + parseDate(
-								accountExpirationDate) + '</li>';
-							t += '<li><b>Member of</b>: ' + result["users"][i]["MemberOf"] +
-								'</li>';
-							t += '</ul>';
-							t += '</div>';
-							t += '</details>';
-							t += "</td><td class='govuk-table__cell'>" + logon + "</td>";
-							//t+="</td><td class='govuk-table__cell'><div class='govuk-checkboxes'><div class='govuk-checkboxes__item'><input class='govuk-checkboxes__input' type ='checkbox' id=" + userId + " name=" + userId + " value='" + SamAccountName +"'><label class='govuk-label govuk-checkboxes__label' for="+ SamAccountName +"></label></td>";
-							t += '</tr>';
+							htmlOutput += '<tr class="govuk-table__row">';
+							htmlOutput += "<td class='govuk-table__cell'>";
+							htmlOutput +=
+								'<details class="govuk-details" data-module="govuk-details">';
+							htmlOutput += '<summary class="govuk-details__summary">';
+							htmlOutput += '<span class="govuk-details__summary-text">';
+							htmlOutput += username;
+							htmlOutput += '</span>';
+							htmlOutput += '</summary>';
+							htmlOutput += '<div class="govuk-details__text">';
+							htmlOutput += '<ul class="govuk-list govuk-list">';
+							htmlOutput +=
+								`<li><b>Distinguished Name</b>: ${result['users'][index]['DistinguishedName']}</li>`;
+							htmlOutput +=
+								`<li><b>Object Guid</b>: ${result['users'][index]['ObjectGuid']}</li>`;
+							htmlOutput +=
+								`<li><b>BadLogonCount</b>: ${result['users'][index]['BadLogonCount']}</li>`;
+							htmlOutput +=
+								`<li><b>Created</b>: ${parseDate(result['users'][index]['Created'])}</li>`;
+							htmlOutput +=
+								`<li><b>Deleted</b>: ${result['users'][index]['Deleted']}</li>`;
+							htmlOutput +=
+								`<li><b>Enabled</b>: ${result['users'][index]['Enabled']}</li>`;
+							htmlOutput +=
+								`<li><b>LockedOut</b>: ${result['users'][index]['LockedOut']}</li>`;
+							htmlOutput +=
+								`<li><b>PasswordLastSet</b>: ${parseDate(result['users'][index]['PasswordLastSet'])}</li>`;
+							htmlOutput +=
+								`<li><b>PasswordExpired</b>: ${result['users'][index]['PasswordExpired']}</li>`;
+							htmlOutput +=
+								`<li><b>PasswordNeverExpires</b>: ${result['users'][index]['PasswordNeverExpires']}</li>`;
+							htmlOutput +=
+								`<li><b>AccountExpires</b>: ${parseDate(accountExpirationDate)}</li>`;
+							htmlOutput +=
+								`<li><b>Member of</b>: ${result['users'][index]['MemberOf']}</li>`;
+							htmlOutput += '</ul>';
+							htmlOutput += '</div>';
+							htmlOutput += '</details>';
+							htmlOutput += `</td><td class="govuk-table__cell">${logon}</td>`;
+							// htmlOutput += `</td><td class="govuk-table__cell"><div class="govuk-checkboxes"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" type="checkbox" id="${userId}" name="${userId}" value="${SamAccountName}"><label class="govuk-label govuk-checkboxes__label" for="${SamAccountName}"></label></td>`;
+							htmlOutput += '</tr>';
 							userDetails = [username, distinguishedName, objectGuid, badLogonCount,
 								created, deleted, enabled, lockedOut, passwordLastSet,
 								passwordExpired, passwordNeverExpires, logon, memberOf
 							];
 							data.push(userDetails);
 						}
-						t += "<tr><td>User Count =  " + userCount + "</td></tr>";
-						t += "<tr><td>Took  " + queryTime + " seconds</td></tr>";
+						htmlOutput += `<tr><td>User Count =  ${userCount}</td></tr>`;
+						htmlOutput += `<tr><td>Took ${queryTime} seconds</td></tr>`;
 
-						t += '</tbody></table>';
-						var reportData = $(t);
-						$("#report").html(reportData);
+						htmlOutput += '</tbody></table>';
+						const reportData = $(htmlOutput);
+						$('#report').html(reportData);
 
-						csvData = data.map(e => e.join(",")).join("\n");
-						$("#saveCSVDiv").show();
-						//$("#disableUsers").show();
-						$("#downloadlink").hide();
+						csvData = data.map(entry => entry.join(',')).join('\n');
+						$('#saveCSVDiv').show();
+						// $('#disableUsers').show();
+						$('#downloadlink').hide();
 					},
 					error: function (xhr, status, error) {
-						alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr
-							.statusText)
+						alert(`Result: ${status} ${error} ${xhr.status} ${xhr.statusText}`);
 					}
 				});
 			});
 
-			$("#saveCSVButton").click(function (e) {
-				saveCSVLocation = $("#saveLocation").val();
-				var link = document.getElementById('downloadlink');
+			$('#saveCSVButton').click(function () {
+				saveCSVLocation = $('#saveLocation').val();
+				const link = document.getElementById('downloadlink');
 				link.href = makeTextFile(csvData);
-				$("#downloadlink").show();
+				$('#downloadlink').show();
 			});
 
-			$("#disableUsers").click(function (e) {
-				var userArray = [];
+			$('#disableUsers').click(function () {
+				const userArray = [];
 
-				for (i = 0; i < userCount; i++) {
-					userID = "userID" + i;
-
-					if ($("#userID" + i).is(':checked')) {
-						//console.log($("#userID"+i).val());
-						userArray.push($("#userID" + i).val());
+				for (let index = 0; index < userCount; index++) {
+					const userId = `userID${index}`;
+					if ($(`#${userId}`).is(':checked')) {
+						// console.log($(`#${userId}`).val());
+						userArray.push($(`#${userId}`).val());
 					}
 				}
 
@@ -182,32 +182,28 @@
 				});
 
 				$.ajax({
-					type: "GET",
-					url: "disableUsers/" + userArray,
-					dataType: "json",
+					type: 'GET',
+					url: `disableUsers/${userArray}`,
+					dataType: 'json',
 					success: function (result, status, xhr) {
-
-						alert("success");
+						alert('success');
 					}
 				});
-
 			});
 
 			$(document).ajaxStart(function () {
-				$("#loading").show();
+				$('#loading').show();
 			});
 
 			$(document).ajaxStop(function () {
-				$("#loading").hide();
+				$('#loading').hide();
 			});
-
 		});
 	</script>
 </head>
 
 <body>
-
-	<header class="govuk-header " role="banner" data-module="govuk-header">
+	<header class="govuk-header" role="banner" data-module="govuk-header">
 		<div class="govuk-header__container govuk-width-container">
 			<div class="govuk-header__logo">
 				<a href="#" class="govuk-header__link govuk-header__link--homepage">
@@ -265,7 +261,6 @@
 		</div>
 	</header>
 
-
 	<div class="govuk-breadcrumbs">
 		<ol class="govuk-breadcrumbs__list">
 			<li class="govuk-breadcrumbs__list-item">
@@ -278,7 +273,6 @@
 	</div>
 
 	<div class="govuk-!-padding-bottom-3"></div>
-
 
 	<div class="govuk-form-group">
 		<label class="govuk-label" for="sort">
@@ -346,8 +340,6 @@
 		Disable Selected Users
 	</button> -->
 	</div>
-
-
 
 	<div w3-include-html="footer"></div>
 	<script>
