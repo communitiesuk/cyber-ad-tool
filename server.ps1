@@ -1,7 +1,7 @@
-#[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-#Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-#Install-WindowsFeature RSAT-AD-PowerShell
-#Install-Module -Name Pode
+# [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+# Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+# Install-WindowsFeature RSAT-AD-PowerShell
+# Install-Module -Name Pode
 
 Import-Module -Name 'Pode'
 Import-Module ActiveDirectory
@@ -91,7 +91,7 @@ Start-PodeServer {
             $daysSelect = $WebEvent.Parameters['daysSelect']
             $fromEmailAddress = $WebEvent.Parameters['fromEmailAddress']
             $emailRecipients = $WebEvent.Parameters['emailRecipients']
-            #$frequency = $WebEvent.Parameters['frequency']
+            # $frequency = $WebEvent.Parameters['frequency']
             $smtpserver = $WebEvent.Parameters['smtpserver']
             New-Item -Path "C:\reports" -Name "setCreds.ps1" -ItemType "file" -Force -Value "
 #`$password=$($password)
@@ -138,8 +138,8 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
             $trigger = New-ScheduledTaskTrigger -Once -At (get-date).AddSeconds(4);
             $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
             Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskPath "ADReportingTasks" -TaskName "setCreds" -Description "This task sets creds"
-            #Start-Sleep -s 5
-            #Unregister-ScheduledTask -TaskName setCreds -Confirm:$false #  TODO restore
+            # Start-Sleep -s 5
+            # Unregister-ScheduledTask -TaskName setCreds -Confirm:$false #  TODO restore
             Write-PodeJsonResponse -Value @{ 'success' = "true" }
         }
         else {
@@ -156,7 +156,7 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
             foreach ($user in $usersSeparated) {
                 Write-Host "user to disable is " + $user
                 Disable-ADAccount -Identity $user
-                #TODO : grey out boxes of already disabled users, display success message, model partial success
+                # TODO : grey out boxes of already disabled users, display success message, model partial success
             }
             Write-PodeJsonResponse -Value @{ 'success' = "true" }
         }
@@ -202,7 +202,7 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
                     $GroupMembership = Get-ADPrincipalGroupMembership -Identity $group -Credential $psCred -Server $hostname
                     foreach ($parentgroup in $GroupMembership) {
                         Write-Host "Parent Group: $($parentgroup.name)"
-                        $parentgroups += $parentgroup.name + ", " #TODO remove trailing semicolon
+                        $parentgroups += $parentgroup.name + ", " # TODO remove trailing semicolon
                     }
                     $simplegroups += @{Groupname = $group.name; Membercount = $membercount; ParentGroups = $parentgroups }
                 }
@@ -345,7 +345,7 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
                     $MembersOfList = ""
                     $GroupMembership = Get-ADPrincipalGroupMembership -Identity $computer -Credential $psCred -Server $hostname
                     foreach ($parentgroup in $GroupMembership) {
-                        $MembersOfList += $parentgroup.name + "; " #TODO remove trailing semicolon
+                        $MembersOfList += $parentgroup.name + "; " # TODO remove trailing semicolon
                     }
                     try {
                         $ip = Resolve-DnsName -Name $computer.DNSHostName -Type A -Server $hostname
@@ -372,7 +372,7 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
                     IPv4Address              = $ipAddress;
                     OperatingSystem          = $computer.OperatingSystem;
                     OperatingSystemVersion   = $computer.OperatingSystemVersion;
-                    #IPv4Address=$computer.IPv4Address
+                    # IPv4Address=$computer.IPv4Address
                 }
             }
             $queryEnd = (Get-Date)
@@ -395,15 +395,15 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
         if (Test-PodeCookie -Name 'password') {   
             $reportName = $WebEvent.Parameters['reportName']
             $daysFilter = $WebEvent.Parameters['daysFilter']
-            #$ou = $WebEvent.Parameters['ou']
-            #Write-Host "OU: " + $ou
+            # $ou = $WebEvent.Parameters['ou']
+            # Write-Host "OU: " + $ou
             $psCred = Get-UserAuth
             $hostname = Get-Hostname
             Write-Host "report is $($reportName)"
             $GPOList = Get-Filter $reportName $daysFilter $psCred $hostname
             $gpos = @()
             foreach ($gpo in $GPOList) {                
-                $gpoDetail = Get-GPOReport -Name $gpo.DisplayName -ReportType HTML #S-Server $hostname
+                $gpoDetail = Get-GPOReport -Name $gpo.DisplayName -ReportType HTML # S-Server $hostname
                 $gpos += @{DisplayName = $gpo.DisplayName;
                     DomainName         = $gpo.DomainName;
                     CreationTime       = $gpo.CreationTime;
@@ -431,7 +431,7 @@ function Get-UserAuth {
     $password = ConvertTo-SecureString $passwd.Value
     Write-Host "user is : $($user)"
     Write-Host "host is : $($host1)"
-    $username = "DOMAIN\$($user.Value)" #TODO need to add domain here   logoncount
+    $username = "DOMAIN\$($user.Value)" # TODO need to add domain here   logoncount
     $psCred = New-Object System.Management.Automation.PSCredential -ArgumentList ($username, $password)
     Write-Host "psCred created"
     return $psCred
@@ -446,10 +446,10 @@ function Get-Hostname {
 function Get-Filter {
     Param (
         [Parameter(Mandatory = $true, Position = 0)]
-        #[ValidatePattern('^Some.*')]
+        # [ValidatePattern('^Some.*')]
         [string] $report,
         [Parameter(Mandatory = $true, Position = 1)]
-        #[ValidateRange(10,100)]
+        # [ValidateRange(10,100)]
         [int] $days,
         [Parameter(Mandatory = $true, Position = 2)]
         $userObj,
