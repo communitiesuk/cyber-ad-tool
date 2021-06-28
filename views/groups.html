@@ -146,8 +146,8 @@
 									const groupType = result['users'][index]['Group'][index2][
 										'Type'
 									];
-									userDetails = [groupName, username, groupType, logon];
-									data.push(userDetails);
+									const userObj = [groupName, username, groupType, logon];
+									data.push(userObj);
 
 									htmlOutput += '<tr class="govuk-table__row">';
 									htmlOutput +=
@@ -176,8 +176,7 @@
 			$('#saveCSVButton').click(function () {
 				saveCSVLocation = $('#saveLocation').val();
 				console.log(saveCSVLocation);
-				console.log('globalVar is ' + csvData);
-
+				console.log(`globalVar is ${csvData}`);
 				const link = document.getElementById('downloadlink');
 				link.href = makeTextFile(csvData);
 				$('#downloadlink').show();
@@ -203,7 +202,7 @@
 </head>
 
 <body>
-	<header class="govuk-header" role="banner" data-module="govuk-header">
+	<header class="govuk-header" data-module="govuk-header">
 		<div class="govuk-header__container govuk-width-container">
 			<div class="govuk-header__logo">
 				<a href="#" class="govuk-header__link govuk-header__link--homepage">
@@ -275,7 +274,7 @@
 	<div class="govuk-!-padding-bottom-3"></div>
 
 	<div class="govuk-form-group">
-		<label class="govuk-label" for="sort">
+		<label class="govuk-label" for="groupSelect">
 			Select a Group Type
 		</label>
 		<select class="govuk-select" id="groupSelect" name="groupSelect">
@@ -288,8 +287,8 @@
 		Discover Groups
 	</button>
 
-	<div class="textAlignCenter" id="loading" name="loading">
-		<img src="/assets/images/loading.gif" />
+	<div class="textAlignCenter" id="loading">
+		<img src="/assets/images/loading.gif" alt="Loading indicator" />
 	</div>
 
 	<div id="message"></div>
@@ -299,7 +298,7 @@
 
 	<div class="govuk-form-group" id="saveCSVDiv">
 		<button id="saveCSVButton" class="govuk-button" data-module="govuk-button">Export to CSV</button>
-		<a download="groups.txt" class="govuk-link" id="downloadlink">Download</a>
+		<a href="#" download="groups.txt" class="govuk-link" id="downloadlink">Download</a>
 	</div>
 
 	<div w3-include-html="footer"></div>

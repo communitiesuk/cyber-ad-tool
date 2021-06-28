@@ -153,13 +153,13 @@
 								`</td><td class='govuk-table__cell'>${OperatingSystem}, ${OperatingSystemVersion}</td>`;
 							htmlOutput += '</tr>';
 
-							userDetails = [userName, logon, distinguishedName, objectGuid,
+							const userObj = [userName, logon, distinguishedName, objectGuid,
 								badLogonCount, created, deleted, enabled, lockedOut,
 								passwordLastSet, passwordExpired, passwordNeverExpires,
 								IPv4Address, OperatingSystem, OperatingSystemVersion, memberOf
 							];
 
-							data.push(userDetails);
+							data.push(userObj);
 							totalCount++;
 						}
 						htmlOutput += `<tr><td>Total Count = ${totalCount}</td></tr>`;
@@ -199,7 +199,7 @@
 </head>
 
 <body>
-	<header class="govuk-header" role="banner" data-module="govuk-header">
+	<header class="govuk-header" data-module="govuk-header">
 		<div class="govuk-header__container govuk-width-container">
 			<div class="govuk-header__logo">
 				<a href="#" class="govuk-header__link govuk-header__link--homepage">
@@ -271,7 +271,7 @@
 	<div class="govuk-!-padding-bottom-3"></div>
 
 	<div class="govuk-form-group">
-		<label class="govuk-label" for="sort">
+		<label class="govuk-label" for="reportSelect">
 			Select a Report
 		</label>
 		<select class="govuk-select" id="reportSelect" name="reportSelect">
@@ -282,14 +282,14 @@
 	</div>
 
 	<div class="govuk-form-group">
-		<label class="govuk-label" for="sort">
+		<label class="govuk-label" for="ouSelect">
 			Select an OU
 		</label>
 		<select class="govuk-select" id="ouSelect" name="ouSelect"></select>
 	</div>
 
 	<div id="daysFilter" class="govuk-form-group">
-		<label class="govuk-label" for="width-3">
+		<label class="govuk-label" for="daysSelect">
 			Days to filter on
 		</label>
 		<input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="90">
@@ -311,8 +311,8 @@
 		Run Report
 	</button>
 
-	<div class="textAlignCenter" id="loading" name="loading">
-		<img src="/assets/images/loading.gif" />
+	<div class="textAlignCenter" id="loading">
+		<img src="/assets/images/loading.gif" alt="Loading indicator" />
 	</div>
 
 	<div id="report"></div>
@@ -320,7 +320,7 @@
 
 	<div class="govuk-form-group" id="saveCSVDiv">
 		<button id="saveCSVButton" class="govuk-button" data-module="govuk-button">Export to CSV</button>
-		<a download="report.txt" class="govuk-link" id="downloadlink">Download</a>
+		<a href="#" download="report.txt" class="govuk-link" id="downloadlink">Download</a>
 	</div>
 
 	<div w3-include-html="footer"></div>
