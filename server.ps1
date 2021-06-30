@@ -7,8 +7,13 @@ Import-Module -Name 'Pode'
 Import-Module ActiveDirectory
 
 Start-PodeServer {
-	New-PodeLoggingMethod -Terminal | Enable-PodeRequestLogging
-	New-PodeLoggingMethod -Terminal | Enable-PodeErrorLogging
+	#New-PodeLoggingMethod -Terminal | Enable-PodeRequestLogging
+	#New-PodeLoggingMethod -Terminal | Enable-PodeErrorLogging
+    
+    New-PodeLoggingMethod -File -Path ./logs -Name 'requests' | Enable-PodeRequestLogging
+    New-PodeLoggingMethod -File -Path ./logs -Name 'requests' | Enable-PodeErrorLogging
+	
+	
 	
     Add-PodeEndpoint -Address * -Port 8080 -Protocol Http
 
