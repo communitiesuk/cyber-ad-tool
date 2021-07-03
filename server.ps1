@@ -7,13 +7,18 @@ Import-Module -Name 'Pode'
 Import-Module ActiveDirectory
 
 # Configuration variables
-$Port = 8444 # Port to run server
-$HttpsEnabled = $true # Enable HTTPS (set to $false to disable encryption)
+$Port = 8080 # Port to run server
+$HttpsEnabled = $false # Enable HTTPS (set to $false to disable encryption)
 $Certificate = 'f5d675a7d2c570ae386adddf434175c2b681bffb' # Certificate thumbprint (replace with thumbprint your own certificate)
 
 Start-PodeServer {
-    New-PodeLoggingMethod -Terminal | Enable-PodeRequestLogging
-    New-PodeLoggingMethod -Terminal | Enable-PodeErrorLogging
+
+    
+    New-PodeLoggingMethod -File -Path ./logs -Name 'requests' | Enable-PodeRequestLogging
+    New-PodeLoggingMethod -File -Path ./logs -Name 'requests' | Enable-PodeErrorLogging
+	
+	
+
 	
     if ($HttpsEnabled) {
         Add-PodeEndpoint -Address * -Port $Port -Protocol Https -CertificateThumbprint $Certificate -CertificateStoreLocation LocalMachine
