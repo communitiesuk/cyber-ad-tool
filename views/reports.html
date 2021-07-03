@@ -1,314 +1,351 @@
-<html lang="en" class="govuk-template ">
+<!DOCTYPE html>
+<html lang="en" class="govuk-template">
+
 <head>
-<title>Active Directory Reporting Tool</title>
-<link rel="stylesheet" type="text/css" href="/styles/govuk-frontend-3.10.2.min.css">
-<script src="/javascript/jquery.min.js"></script>
-<script src="/javascript/ad.js"></script>
+	<title>Active Directory Reporting Tool</title>
+	<link rel="stylesheet" type="text/css" href="/styles/govuk-frontend-3.10.2.min.css">
+	<script src="/javascript/jquery.min.js"></script>
+	<script src="/javascript/ad.js"></script>
 
-<script>
-$(document).ready(function () {
-	var csvData = null;
-	
-	$("#showUsers").hide();
-	$("#saveCSVDiv").hide();
-	$("#daysFilter").hide();
-	$("#loading").hide();
-	
-    $("#reportSelect").change(function (e) {
-		var reports = ['All Users', 'Users Never Logged On', 'Locked Out Users', 'Disabled Users','Account Expired Users','Members of Domain Local Administrators Group','Members of Domain Admins Group','Users in more than one group','Users with logon script','Users without logon script','Disabled users','Account never expires users','Dial in allowed users','Users with non restricted logon times','Admin users with expired passwords'];
+	<script>
+		$(function () {
+			let csvData = null;
 
-		if (reports.indexOf($("#reportSelect").val()) !== -1) {
-			$("#daysFilter").hide();
-		} else {
-			$("#daysFilter").show();
-		}
-	});
-	
-	$("#runReport").click(function (e) {
-		$("#showGroups").hide();
-		$("#saveCSVDiv").hide();
-		
-		$.ajax({
-			type: "GET",
-			url: "report/" + $("#reportSelect").val() + "/" + $("#daysSelect").val() + "/" + $("#quickQuery").is(':checked'),
-			dataType: "json",
-			success: function (result, status, xhr) {
-				if (result["users"] == "null") {
-					window.location.replace("/");
-				} 
-					
-				
-				var queryTime = (result["queryTime"])
-				var data = [];
-				var t = '<h2 class="govuk-heading-l">' + $("#reportSelect").val() + '</h2>';	
+			$('#showUsers').hide();
+			$('#saveCSVDiv').hide();
+			$('#daysFilter').hide();
+			$('#loading').hide();
 
-				t+='<table class="govuk-table">';
-				t+='<thead class="govuk-table__head">';			
-				t+='<tr class="govuk-table__row">';
-				t+='<th scope="col" class="govuk-table__header">Name</th>';
-				t+='<th scope="col" class="govuk-table__header">Last Logon</th>';
-				//t+='<th scope="col" class="govuk-table__header">Disable</th>';
-				t+='</tr></thead>';
-				
-				var userDetails = ["Username","distinguishedName","objectGuid","badLogonCount","created","deleted","enabled","lockedOut","passwordLastSet","passwordExpired","passwordNeverExpires","Last Logon","Membe of"];
-				data.push(userDetails);
-				var userId="";
-				userCount = result["users"].length;
-				
-				for (i = 0; i < userCount; i++) {
-					userId="userID" + i;
-					var userName=result["users"][i]["Username"];
-					logon=parseDate(result["users"][i]["LastLogonDate"])
-					var username = result["users"][i]["Username"];
-					var memberOf = result["users"][i]["MemberOf"];
-					var dn = result["users"][i]["DistinguishedName"];
-					var distinguishedName = dn.replace(/,/g, ";");
-					var objectGuid = result["users"][i]["ObjectGuid"];
-					var badLogonCount = result["users"][i]["BadLogonCount"];
-					var created = parseDate(result["users"][i]["Created"]);
-					var deleted = result["users"][i]["Deleted"];
-					var enabled = result["users"][i]["Enabled"];
-					var lockedOut = result["users"][i]["LockedOut"];
-					var passwordLastSet = parseDate(result["users"][i]["PasswordLastSet"]);
-					var passwordExpired = result["users"][i]["PasswordExpired"];
-					var passwordNeverExpires = result["users"][i]["PasswordNeverExpires"];
-					var accountExpirationDate = result["users"][i]["AccountExpirationDate"];
-					
-					var SamAccountName = result["users"][i]["SamAccountName"];
-					
-					t+='<tr class="govuk-table__row">';
-					t+="<td class='govuk-table__cell'>";
-					t+='<details class="govuk-details" data-module="govuk-details">';
-					t+='<summary class="govuk-details__summary">';
-					t+='<span class="govuk-details__summary-text">';
-					t+=username;
-					t+='</span>';
-					t+='</summary>';
-					t+='<div class="govuk-details__text">';
-					t+='<ul class="govuk-list govuk-list">';
-					t+='<li><b>Distinguished Name</b>: ' + result["users"][i]["DistinguishedName"] + '</li>';
-					t+='<li><b>Object Guid</b>: ' + result["users"][i]["ObjectGuid"] + '</li>';
-					t+='<li><b>BadLogonCount</b>: ' + result["users"][i]["BadLogonCount"] + '</li>';
-					t+='<li><b>Created</b>: ' + parseDate(result["users"][i]["Created"]) + '</li>';
-					t+='<li><b>Deleted</b>: ' + result["users"][i]["Deleted"] + '</li>';
-					t+='<li><b>Enabled</b>: ' + result["users"][i]["Enabled"] + '</li>';
-					t+='<li><b>LockedOut</b>: ' + result["users"][i]["LockedOut"] + '</li>';
-					t+='<li><b>PasswordLastSet</b>: ' + parseDate(result["users"][i]["PasswordLastSet"]) + '</li>';
-					t+='<li><b>PasswordExpired</b>: ' + result["users"][i]["PasswordExpired"] + '</li>';
-					t+='<li><b>PasswordNeverExpires</b>: ' + result["users"][i]["PasswordNeverExpires"] + '</li>';
-					t+='<li><b>AccountExpires</b>: ' + parseDate(accountExpirationDate) + '</li>';
-					t+='<li><b>Member of</b>: ' + result["users"][i]["MemberOf"] + '</li>';
-					t+='</ul>';
-					t+='</div>';
-					t+='</details>';
-					t+="</td><td class='govuk-table__cell'>" + logon + "</td>";
-					//t+="</td><td class='govuk-table__cell'><div class='govuk-checkboxes'><div class='govuk-checkboxes__item'><input class='govuk-checkboxes__input' type ='checkbox' id=" + userId + " name=" + userId + " value='" + SamAccountName +"'><label class='govuk-label govuk-checkboxes__label' for="+ SamAccountName +"></label></td>";
-					t+='</tr>';
-					userDetails = [username,distinguishedName,objectGuid,badLogonCount,created,deleted,enabled,lockedOut,passwordLastSet,passwordExpired,passwordNeverExpires,logon,memberOf];
-					data.push(userDetails); 
+			$('#reportSelect').change(function () {
+				const reports = ['All Users', 'Users Never Logged On', 'Locked Out Users', 'Disabled Users',
+					'Account Expired Users', 'Members of Domain Local Administrators Group',
+					'Members of Domain Admins Group', 'Users in more than one group',
+					'Users with logon script', 'Users without logon script', 'Disabled users',
+					'Account never expires users', 'Dial in allowed users',
+					'Users with non restricted logon times', 'Admin users with expired passwords'
+				];
+
+				if (reports.indexOf($('#reportSelect').val()) !== -1) {
+					$('#daysFilter').hide();
+				} else {
+					$('#daysFilter').show();
 				}
-				t+="<tr><td>User Count =  " + userCount + "</td></tr>";
-				t+="<tr><td>Took  " + queryTime + " seconds</td></tr>";
-				
-				t+='</tbody></table>';
-				var reportData = $(t);
-				$("#report").html(reportData);	
-				
-				csvData = data.map(e => e.join(",")).join("\n");
-				$("#saveCSVDiv").show();
-				//$("#disableUsers").show();
-				$("#downloadlink").hide();
-			},
-			error: function (xhr, status, error) {
-				alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
-			}
-		});
-    });
-	
-	$("#saveCSVButton").click(function (e) {
-		saveCSVLocation=$("#saveLocation").val();
-		var link = document.getElementById('downloadlink');
-		link.href = makeTextFile(csvData);
-		$("#downloadlink").show();
-	});
-	
-	$("#disableUsers").click(function (e) {
-		var userArray = [];
+			});
 
-		for (i = 0; i < userCount; i++) {
-			userID="userID"+i;
-			
-			if($("#userID" + i).is(':checked')) {
-			    //console.log($("#userID"+i).val());
-				userArray.push($("#userID"+i).val()); 
-			} 
-		}
-			
-		userArray.forEach(function (user, index) {
-			console.log(user);
-		});
-		
-		$.ajax({
-					type: "GET",
-					url: "disableUsers/" + userArray,
-					dataType: "json",
+			$('#runReport').click(function () {
+				$('#showGroups').hide();
+				$('#saveCSVDiv').hide();
+
+				$.ajax({
+					type: 'GET',
+					url: `report/${$('#reportSelect').val()}/${$('#daysSelect').val()}/${$('#quickQuery').is(':checked')}`,
+					dataType: 'json',
 					success: function (result, status, xhr) {
-					
-					alert ("success");
-			}
+						if (result['users'] === 'null') {
+							window.location.replace('/');
+						}
+
+						const queryTime = (result['queryTime'])
+						const data = [];
+
+						let htmlOutput =
+							`<h2 class="govuk-heading-l">${$('#reportSelect').val()}</h2>`;
+						htmlOutput += '<table class="govuk-table">';
+						htmlOutput += '<thead class="govuk-table__head">';
+						htmlOutput += '<tr class="govuk-table__row">';
+						htmlOutput += '<th scope="col" class="govuk-table__header">Name</th>';
+						// htmlOutput +=
+						// 	'<th scope="col" class="govuk-table__header">Last Logon</th>';
+						htmlOutput += '<th scope="col" class="govuk-table__header">Disable</th>';
+						htmlOutput += '</tr></thead>';
+
+						const userDetails = ['Username', 'distinguishedName', 'objectGuid',
+							'badLogonCount', 'created', 'deleted', 'enabled', 'lockedOut',
+							'passwordLastSet', 'passwordExpired', 'passwordNeverExpires',
+							'Last Logon', 'Member of'
+						];
+
+						data.push(userDetails);
+						const userCount = result['users'].length;
+
+						for (let index = 0; index < userCount; index++) {
+							const userId = `userID${index}`;
+							const userName = result['users'][index]['Username'];
+							const logon = parseDate(result['users'][index]['LastLogonDate'])
+							const username = result['users'][index]['Username'];
+							const memberOf = result['users'][index]['MemberOf'];
+							const dn = result['users'][index]['DistinguishedName'];
+							const distinguishedName = dn.replace(/,/g, ';');
+							const objectGuid = result['users'][index]['ObjectGuid'];
+							const badLogonCount = result['users'][index]['BadLogonCount'];
+							const created = parseDate(result['users'][index]['Created']);
+							const deleted = result['users'][index]['Deleted'];
+							const enabled = result['users'][index]['Enabled'];
+							const lockedOut = result['users'][index]['LockedOut'];
+							const passwordLastSet = parseDate(result['users'][index][
+								'PasswordLastSet'
+							]);
+							const passwordExpired = result['users'][index]['PasswordExpired'];
+							const passwordNeverExpires = result['users'][index][
+								'PasswordNeverExpires'
+							];
+							const accountExpirationDate = result['users'][index][
+								'AccountExpirationDate'
+							];
+							const SamAccountName = result['users'][index]['SamAccountName'];
+
+							htmlOutput += '<tr class="govuk-table__row">';
+							htmlOutput += "<td class='govuk-table__cell'>";
+							htmlOutput +=
+								'<details class="govuk-details" data-module="govuk-details">';
+							htmlOutput += '<summary class="govuk-details__summary">';
+							htmlOutput += '<span class="govuk-details__summary-text">';
+							htmlOutput += username;
+							htmlOutput += '</span>';
+							htmlOutput += '</summary>';
+							htmlOutput += '<div class="govuk-details__text">';
+							htmlOutput += '<ul class="govuk-list govuk-list">';
+							htmlOutput +=
+								`<li><b>Distinguished Name</b>: ${result['users'][index]['DistinguishedName']}</li>`;
+							htmlOutput +=
+								`<li><b>Object Guid</b>: ${result['users'][index]['ObjectGuid']}</li>`;
+							htmlOutput +=
+								`<li><b>BadLogonCount</b>: ${result['users'][index]['BadLogonCount']}</li>`;
+							htmlOutput +=
+								`<li><b>Created</b>: ${parseDate(result['users'][index]['Created'])}</li>`;
+							htmlOutput +=
+								`<li><b>Deleted</b>: ${result['users'][index]['Deleted']}</li>`;
+							htmlOutput +=
+								`<li><b>Enabled</b>: ${result['users'][index]['Enabled']}</li>`;
+							htmlOutput +=
+								`<li><b>LockedOut</b>: ${result['users'][index]['LockedOut']}</li>`;
+							htmlOutput +=
+								`<li><b>PasswordLastSet</b>: ${parseDate(result['users'][index]['PasswordLastSet'])}</li>`;
+							htmlOutput +=
+								`<li><b>PasswordExpired</b>: ${result['users'][index]['PasswordExpired']}</li>`;
+							htmlOutput +=
+								`<li><b>PasswordNeverExpires</b>: ${result['users'][index]['PasswordNeverExpires']}</li>`;
+							htmlOutput +=
+								`<li><b>AccountExpires</b>: ${parseDate(accountExpirationDate)}</li>`;
+							htmlOutput +=
+								`<li><b>Member of</b>: ${result['users'][index]['MemberOf']}</li>`;
+							htmlOutput += '</ul>';
+							htmlOutput += '</div>';
+							htmlOutput += '</details>';
+							htmlOutput += `</td><td class="govuk-table__cell">${logon}</td>`;
+							// htmlOutput += `</td><td class="govuk-table__cell"><div class="govuk-checkboxes"><div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" type="checkbox" id="${userId}" name="${userId}" value="${SamAccountName}"><label class="govuk-label govuk-checkboxes__label" for="${SamAccountName}"></label></td>`;
+							htmlOutput += '</tr>';
+							const userObject = [username, distinguishedName, objectGuid,
+								badLogonCount,
+								created, deleted, enabled, lockedOut, passwordLastSet,
+								passwordExpired, passwordNeverExpires, logon, memberOf
+							];
+							data.push(userObject);
+						}
+						htmlOutput += `<tr><td>User Count =  ${userCount}</td></tr>`;
+						htmlOutput += `<tr><td>Took ${queryTime} seconds</td></tr>`;
+
+						htmlOutput += '</tbody></table>';
+						const reportData = $(htmlOutput);
+						$('#report').html(reportData);
+
+						csvData = data.map(entry => entry.join(',')).join('\n');
+						$('#saveCSVDiv').show();
+						// $('#disableUsers').show();
+						$('#downloadlink').hide();
+					},
+					error: function (xhr, status, error) {
+						alert(`Result: ${status} ${error} ${xhr.status} ${xhr.statusText}`);
+					}
+				});
+			});
+
+			$('#saveCSVButton').click(function () {
+				saveCSVLocation = $('#saveLocation').val();
+				const link = document.getElementById('downloadlink');
+				link.href = makeTextFile(csvData);
+				$('#downloadlink').show();
+			});
+
+			$('#disableUsers').click(function () {
+				const userArray = [];
+
+				for (let index = 0; index < userCount; index++) {
+					const userId = `userID${index}`;
+					if ($(`#${userId}`).is(':checked')) {
+						// console.log($(`#${userId}`).val());
+						userArray.push($(`#${userId}`).val());
+					}
+				}
+
+				userArray.forEach(function (user, index) {
+					console.log(user);
+				});
+
+				$.ajax({
+					type: 'GET',
+					url: `disableUsers/${userArray}`,
+					dataType: 'json',
+					success: function (result, status, xhr) {
+						alert('success');
+					}
+				});
+			});
+
+			$(document).ajaxStart(function () {
+				$('#loading').show();
+			});
+
+			$(document).ajaxStop(function () {
+				$('#loading').hide();
+			});
 		});
-		
-	});
-	
-    $(document).ajaxStart(function () {
-        $("#loading").show();
-    });
-  
-    $(document).ajaxStop(function () {
-        $("#loading").hide();
-    });
-  
-});
-</script>
+	</script>
 </head>
+
 <body>
+	<header class="govuk-header" data-module="govuk-header">
+		<div class="govuk-header__container govuk-width-container">
+			<div class="govuk-header__logo">
+				<a href="#" class="govuk-header__link govuk-header__link--homepage">
+					<span class="govuk-header__logotype">
+						<svg aria-hidden="true" focusable="false" class="govuk-header__logotype-crown"
+							xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 97" height="30" width="36">
+							<path fill="currentColor" fill-rule="evenodd"
+								d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z">
+							</path>
+							<image src="/assets/images/govuk-logotype-crown.png" xlink:href="data:," display="none"
+								class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
+						</svg>
+						<span class="govuk-header__logotype-text">
+							GOV.UK
+						</span>
+					</span>
+				</a>
+			</div>
+			<div class="govuk-header__content">
+				<a href="/" class="govuk-header__link govuk-header__link--service-name">
+					Active Directory Reporting Tool
+				</a>
+				<button type="button" class="govuk-header__menu-button govuk-js-header-toggle"
+					aria-controls="navigation" aria-label="Show or hide navigation menu">Menu</button>
+				<nav>
+					<ul id="navigation" class="govuk-header__navigation " aria-label="Navigation menu">
+						<li class="govuk-header__navigation-item">
+							<a class="govuk-header__link" href="groups">
+								Group Reports
+							</a>
+						</li>
+						<li class="govuk-header__navigation-item govuk-header__navigation-item--active">
+							<a class="govuk-header__link" href="reports">
+								User Reports
+							</a>
+						</li>
+						<li class="govuk-header__navigation-item">
+							<a class="govuk-header__link" href="computers">
+								Computer Reports
+							</a>
+						</li>
+						<li class="govuk-header__navigation-item">
+							<a class="govuk-header__link" href="gpo">
+								GPO Reports
+							</a>
+						</li>
+						<li class="govuk-header__navigation-item">
+							<a class="govuk-header__link" href="scheduling">
+								Scheduling
+							</a>
+						</li>
+					</ul>
+				</nav>
+			</div>
+		</div>
+	</header>
 
-<header class="govuk-header " role="banner" data-module="govuk-header">
-  <div class="govuk-header__container govuk-width-container">
-    <div class="govuk-header__logo">
-      <a href="#" class="govuk-header__link govuk-header__link--homepage">
-        <span class="govuk-header__logotype">
-          <svg aria-hidden="true" focusable="false" class="govuk-header__logotype-crown" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 97" height="30" width="36">
-            <path fill="currentColor" fill-rule="evenodd" d="M25 30.2c3.5 1.5 7.7-.2 9.1-3.7 1.5-3.6-.2-7.8-3.9-9.2-3.6-1.4-7.6.3-9.1 3.9-1.4 3.5.3 7.5 3.9 9zM9 39.5c3.6 1.5 7.8-.2 9.2-3.7 1.5-3.6-.2-7.8-3.9-9.1-3.6-1.5-7.6.2-9.1 3.8-1.4 3.5.3 7.5 3.8 9zM4.4 57.2c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.5-1.5-7.6.3-9.1 3.8-1.4 3.5.3 7.6 3.9 9.1zm38.3-21.4c3.5 1.5 7.7-.2 9.1-3.8 1.5-3.6-.2-7.7-3.9-9.1-3.6-1.5-7.6.3-9.1 3.8-1.3 3.6.4 7.7 3.9 9.1zm64.4-5.6c-3.6 1.5-7.8-.2-9.1-3.7-1.5-3.6.2-7.8 3.8-9.2 3.6-1.4 7.7.3 9.2 3.9 1.3 3.5-.4 7.5-3.9 9zm15.9 9.3c-3.6 1.5-7.7-.2-9.1-3.7-1.5-3.6.2-7.8 3.7-9.1 3.6-1.5 7.7.2 9.2 3.8 1.5 3.5-.3 7.5-3.8 9zm4.7 17.7c-3.6 1.5-7.8-.2-9.2-3.8-1.5-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.3 3.5-.4 7.6-3.9 9.1zM89.3 35.8c-3.6 1.5-7.8-.2-9.2-3.8-1.4-3.6.2-7.7 3.9-9.1 3.6-1.5 7.7.3 9.2 3.8 1.4 3.6-.3 7.7-3.9 9.1zM69.7 17.7l8.9 4.7V9.3l-8.9 2.8c-.2-.3-.5-.6-.9-.9L72.4 0H59.6l3.5 11.2c-.3.3-.6.5-.9.9l-8.8-2.8v13.1l8.8-4.7c.3.3.6.7.9.9l-5 15.4v.1c-.2.8-.4 1.6-.4 2.4 0 4.1 3.1 7.5 7 8.1h.2c.3 0 .7.1 1 .1.4 0 .7 0 1-.1h.2c4-.6 7.1-4.1 7.1-8.1 0-.8-.1-1.7-.4-2.4V34l-5.1-15.4c.4-.2.7-.6 1-.9zM66 92.8c16.9 0 32.8 1.1 47.1 3.2 4-16.9 8.9-26.7 14-33.5l-9.6-3.4c1 4.9 1.1 7.2 0 10.2-1.5-1.4-3-4.3-4.2-8.7L108.6 76c2.8-2 5-3.2 7.5-3.3-4.4 9.4-10 11.9-13.6 11.2-4.3-.8-6.3-4.6-5.6-7.9 1-4.7 5.7-5.9 8-.5 4.3-8.7-3-11.4-7.6-8.8 7.1-7.2 7.9-13.5 2.1-21.1-8 6.1-8.1 12.3-4.5 20.8-4.7-5.4-12.1-2.5-9.5 6.2 3.4-5.2 7.9-2 7.2 3.1-.6 4.3-6.4 7.8-13.5 7.2-10.3-.9-10.9-8-11.2-13.8 2.5-.5 7.1 1.8 11 7.3L80.2 60c-4.1 4.4-8 5.3-12.3 5.4 1.4-4.4 8-11.6 8-11.6H55.5s6.4 7.2 7.9 11.6c-4.2-.1-8-1-12.3-5.4l1.4 16.4c3.9-5.5 8.5-7.7 10.9-7.3-.3 5.8-.9 12.8-11.1 13.8-7.2.6-12.9-2.9-13.5-7.2-.7-5 3.8-8.3 7.1-3.1 2.7-8.7-4.6-11.6-9.4-6.2 3.7-8.5 3.6-14.7-4.6-20.8-5.8 7.6-5 13.9 2.2 21.1-4.7-2.6-11.9.1-7.7 8.8 2.3-5.5 7.1-4.2 8.1.5.7 3.3-1.3 7.1-5.7 7.9-3.5.7-9-1.8-13.5-11.2 2.5.1 4.7 1.3 7.5 3.3l-4.7-15.4c-1.2 4.4-2.7 7.2-4.3 8.7-1.1-3-.9-5.3 0-10.2l-9.5 3.4c5 6.9 9.9 16.7 14 33.5 14.8-2.1 30.8-3.2 47.7-3.2z"></path>
-            <image src="/assets/images/govuk-logotype-crown.png" xlink:href="data:," display="none" class="govuk-header__logotype-crown-fallback-image" width="36" height="32"></image>
-          </svg>
-          <span class="govuk-header__logotype-text">
-            GOV.UK
-          </span>
-        </span>
-      </a>
-    </div>
-    <div class="govuk-header__content">
-      <a href="/" class="govuk-header__link govuk-header__link--service-name">
-        Active Directory Reporting Tool
-      </a>
-      <button type="button" class="govuk-header__menu-button govuk-js-header-toggle" aria-controls="navigation" aria-label="Show or hide navigation menu">Menu</button>
-      <nav>
-        <ul id="navigation" class="govuk-header__navigation " aria-label="Navigation menu">
-          <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="groups">
-              Group Reports
-            </a>
-          </li>
-          <li class="govuk-header__navigation-item govuk-header__navigation-item--active">
-            <a class="govuk-header__link" href="reports">
-              User Reports
-            </a>
-          </li>
-          <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="computers">
-              Computer Reports
-            </a>
-          </li>
-		  <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="gpo">
-              GPO Reports
-            </a>
-          </li>
-		  <li class="govuk-header__navigation-item">
-            <a class="govuk-header__link" href="scheduling">
-              Scheduling
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</header>
-
-
-<div class="govuk-breadcrumbs">
-  <ol class="govuk-breadcrumbs__list">
-    <li class="govuk-breadcrumbs__list-item">
-      <a class="govuk-breadcrumbs__link" href="/">Home</a>
-    </li>
-    <li class="govuk-breadcrumbs__list-item">
-      <a class="govuk-breadcrumbs__link" href="#">User Reports</a>
-    </li>
-  </ol>
-</div>
-
-<div class="govuk-!-padding-bottom-3"></div>
-
-
-<div class="govuk-form-group">
-  <label class="govuk-label" for="sort">
-    Select a Report
-  </label>
-  <select class="govuk-select" id="reportSelect" name="reportSelect">
-    <option value="All Users">All Users</option>
-	<option value="Users Never Logged On">Users Never Logged On</option>
-	<option value="Users Not Recently Logged On">Users Not Logged On for nn days</option>
-	<option value="Locked Out Users">Locked Out Users</option>
-	<option value="Disabled Users">Disabled Users</option>
-	<option value="Recently Created Users">Recently Created Users</option>
-	<option value="Account Expired Users">Account Expired Users</option>
-	<option value="Soon-to-expire User Accounts">Soon-to-expire User Accounts</option>
-	<option value="Members of Domain Local Administrators Group">Members of Domain Local Administrators Group</option>
-	<option value="Members of Domain Admins Group">Members of Domain Admins Group</option>
-	<option value="Users in more than one group">Users in more than one group</option>
-	<option value="Recently deleted users">Recently deleted users</option>
-	<option value="Recently modified users">Recently modified users</option>
-	<option value="Users with logon script">Users with logon script</option>
-	<option value="Users without logon script">Users without logon script</option>
-	<option value="Account never expires users">Account never expires users</option>
-	<option value="Recently logged on users">Recently logged on users</option>
-	<option value="Dial in allowed users">Dial in allowed users</option>
-	<option value="Users with non restricted logon times">Users with non restricted logon times</option>
-	<option value="Admin users with expired passwords">Admin users with expired passwords</option>
-  </select>
-</div>
-
-<div id="daysFilter" class="govuk-form-group">
-  <label class="govuk-label" for="width-3">
-    Days to filter on
-  </label>
-  <input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="30">
- </div>
-
-<div class="govuk-form-group">
-	<div class="govuk-checkboxes">
-      <div class="govuk-checkboxes__item">
-        <input class="govuk-checkboxes__input" id="quickQuery" name="quickQuery" type="checkbox" value="quickQuery">
-        <label class="govuk-label govuk-checkboxes__label" for="quickQuery">
-          Quick Query (excludes group membership)
-        </label>
-      </div>
+	<div class="govuk-breadcrumbs">
+		<ol class="govuk-breadcrumbs__list">
+			<li class="govuk-breadcrumbs__list-item">
+				<a class="govuk-breadcrumbs__link" href="/">Home</a>
+			</li>
+			<li class="govuk-breadcrumbs__list-item">
+				<a class="govuk-breadcrumbs__link" href="#">User Reports</a>
+			</li>
+		</ol>
 	</div>
-</div>
 
-<button id="runReport" class="govuk-button" data-module="govuk-button">
-  Run Report
-</button>
+	<div class="govuk-!-padding-bottom-3"></div>
 
-<div class="textAlignCenter" id="loading" name="loading">
-    <img src="/assets/images/loading.gif" />
-</div>
+	<div class="govuk-form-group">
+		<label class="govuk-label" for="reportSelect">
+			Select a Report
+		</label>
+		<select class="govuk-select" id="reportSelect" name="reportSelect">
+			<option value="All Users">All Users</option>
+			<option value="Users Never Logged On">Users Never Logged On</option>
+			<option value="Users Not Recently Logged On">Users Not Logged On for nn days</option>
+			<option value="Locked Out Users">Locked Out Users</option>
+			<option value="Disabled Users">Disabled Users</option>
+			<option value="Recently Created Users">Recently Created Users</option>
+			<option value="Account Expired Users">Account Expired Users</option>
+			<option value="Soon-to-expire User Accounts">Soon-to-expire User Accounts</option>
+			<option value="Members of Domain Local Administrators Group">Members of Domain Local Administrators Group
+			</option>
+			<option value="Members of Domain Admins Group">Members of Domain Admins Group</option>
+			<option value="Users in more than one group">Users in more than one group</option>
+			<option value="Recently deleted users">Recently deleted users</option>
+			<option value="Recently modified users">Recently modified users</option>
+			<option value="Users with logon script">Users with logon script</option>
+			<option value="Users without logon script">Users without logon script</option>
+			<option value="Account never expires users">Account never expires users</option>
+			<option value="Recently logged on users">Recently logged on users</option>
+			<option value="Dial in allowed users">Dial in allowed users</option>
+			<option value="Users with non restricted logon times">Users with non restricted logon times</option>
+			<option value="Admin users with expired passwords">Admin users with expired passwords</option>
+		</select>
+	</div>
 
-<div id="report"></div>
-<div id="save"></div>
+	<div id="daysFilter" class="govuk-form-group">
+		<label class="govuk-label" for="daysSelect">
+			Days to filter on
+		</label>
+		<input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="30">
+	</div>
 
-<div class="govuk-form-group" id="saveCSVDiv">
-	<button id="saveCSVButton" class="govuk-button" data-module="govuk-button">Export to CSV</button>
-	<a download="report.txt" class="govuk-link" id="downloadlink">Download</a>
-	<!--<button id="disableUsers" class="govuk-button" data-module="govuk-button">
+	<div class="govuk-form-group">
+		<div class="govuk-checkboxes">
+			<div class="govuk-checkboxes__item">
+				<input class="govuk-checkboxes__input" id="quickQuery" name="quickQuery" type="checkbox"
+					value="quickQuery">
+				<label class="govuk-label govuk-checkboxes__label" for="quickQuery">
+					Quick Query (excludes group membership)
+				</label>
+			</div>
+		</div>
+	</div>
+
+	<button id="runReport" class="govuk-button" data-module="govuk-button">
+		Run Report
+	</button>
+
+	<div class="textAlignCenter" id="loading">
+		<img src="/assets/images/loading.gif" alt="Loading indicator" />
+	</div>
+
+	<div id="report"></div>
+	<div id="save"></div>
+
+	<div class="govuk-form-group" id="saveCSVDiv">
+		<button id="saveCSVButton" class="govuk-button" data-module="govuk-button">Export to CSV</button>
+		<a href="#" download="report.txt" class="govuk-link" id="downloadlink">Download</a>
+		<!--<button id="disableUsers" class="govuk-button" data-module="govuk-button">
 		Disable Selected Users
 	</button> -->
-</div>
+	</div>
 
-
-   
-<div w3-include-html="footer"></div> 
-<script>includeHTML();</script>
+	<div w3-include-html="footer"></div>
+	<script>
+		includeHTML();
+	</script>
 </body>
+
 </html>
