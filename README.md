@@ -142,14 +142,17 @@ In this example login is the path, username,password and hostname are parameters
 $WebEvent.Parameters['username']
 ``` 
 
-### Channging the listener port
+### Channging the listener port and setting up HTTPS encryption
 
-In server.ps1 change 8080 to the desired port on thee following line:
+In server.ps1 change configuration variables (lines 10-12) at the top of the script to adjust the port number and whether HTTPS is enabled (including specifying a certificate):
 
 ```
-Add-PodeEndpoint -Address * -Port 8080 -Protocol Http
+# Configuration variables
+$Port = 8080 # Port to run server
+$HttpsEnabled = $false # Enable HTTPS (set to $false to disable encryption)
+$Certificate = 'THUMBPRINT' # Certificate thumbprint (replace with thumbprint your own certificate)
 ```
-
+For enabling HTTPS encryption you need to have a certificate in the local machine store and replace the thumbprint in the configuration (line 12).
 
 ## Built With
 
