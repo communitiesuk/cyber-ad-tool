@@ -1,7 +1,7 @@
 @{
     Server = @{
         Request = @{
-            Timeout = 180
+            Timeout = 600
         }
     }
 }

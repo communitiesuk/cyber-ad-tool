@@ -14,17 +14,21 @@ $Certificate = 'f5d675a7d2c570ae386adddf434175c2b681bffb' # Certificate thumbpri
 Start-PodeServer {
 
     
-    New-PodeLoggingMethod -File -Path ./logs -Name 'requests' | Enable-PodeRequestLogging
-    New-PodeLoggingMethod -File -Path ./logs -Name 'requests' | Enable-PodeErrorLogging
+   New-PodeLoggingMethod -File -Path ./logs -Name 'requests' | Enable-PodeRequestLogging
+   New-PodeLoggingMethod -File -Path ./logs -Name 'requests' | Enable-PodeErrorLogging
 	
-	
+	# New-PodeLoggingMethod -Terminal | Enable-PodeRequestLogging
+    # New-PodeLoggingMethod -Terminal | Enable-PodeErrorLogging
+
 
 	
     if ($HttpsEnabled) {
         Add-PodeEndpoint -Address * -Port $Port -Protocol Https -CertificateThumbprint $Certificate -CertificateStoreLocation LocalMachine
+         Write-Host "https"
     }
     else {
         Add-PodeEndpoint -Address * -Port $Port -Protocol Http
+        Write-Host "http"
     }
 
     Add-PodeRoute -Method Get -Path '/' -ScriptBlock {
@@ -346,7 +350,10 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
             $queryLoopStart = (Get-Date)
             $computers = @()
             foreach ($computer in $ComputerList) {
-                if ($quickQuery -eq "false") {    
+
+                if ($quickQuery -eq "false") {
+                    Write-Host "Quick query is false" $computer
+
                     $MembersOfList = ""
                     $GroupMembership = Get-ADPrincipalGroupMembership -Identity $computer -Credential $psCred -Server $hostname
                     foreach ($parentgroup in $GroupMembership) {
@@ -355,11 +362,40 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
                     try {
                         $ip = Resolve-DnsName -Name $computer.DNSHostName -Type A -Server $hostname
                         $ipAddress = $ip.IPAddress;
+
                     }
                     catch {
+                        Write-Host $_
                         $ipAddress = "Not avaialable"
                         Write-Host "IP not available for $($computer.DNSHostName)"
                     }
+    
+                    try {
+                        $computerDetails = Get-WmiObject -Class Win32_NetworkLoginProfile -ComputerName $ipAddress | 
+                        Sort-Object -Property LastLogon -Descending | 
+                        Select-Object -Property * -First 1 | 
+                        Where-Object {$_.LastLogon -match "(\d{14})"} | 
+                        Foreach-Object { New-Object PSObject -Property @{ Name=$_.Name;LastLogon=[datetime]::ParseExact($matches[0], "yyyyMMddHHmmss", $null)}}
+                        $lastLogonDate     = $computerDetails.LastLogon;
+                        $lastLogonUserName = $computerDetails.Name;
+                        } 
+                    catch {
+                        Write-Host $_
+                        $lastLogonDate = "null";
+                        $lastLogonUserName = "null";
+
+                    }
+
+
+
+                    
+                    Write-Host $computerDetails
+                    Write-Host $lastLogonDate
+                    Write-Host $lastLogonUserName
+
+
+ 
+                    
                 }
                 $computers += @{ComputerName = $computer.DNSHostName;
                     LastLogonDate            = $computer.LastLogonDate;
@@ -377,6 +413,8 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
                     IPv4Address              = $ipAddress;
                     OperatingSystem          = $computer.OperatingSystem;
                     OperatingSystemVersion   = $computer.OperatingSystemVersion;
+                    LastLogonUserDate        = $lastLogonDate;
+                    LastLogonUserName        = $lastLogonUserName;
                     # IPv4Address=$computer.IPv4Address
                 }
             }
@@ -427,6 +465,32 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
             Write-PodeJsonResponse -Value @{ gpo = 'null'; }
         }
     }
+
+     Add-PodeRoute -Method Get -Path '/extended/:computerName' -ScriptBlock {
+         #if (Test-PodeCookie -Name 'password') {   
+            $computerName = $WebEvent.Parameters['computerName']
+            #TODO need to pass creds
+           
+            $computerDetails = Get-WmiObject -Class Win32_NetworkLoginProfile -ComputerName $computerName | 
+            Sort-Object -Property LastLogon -Descending | 
+            Select-Object -Property * -First 1 | 
+            Where-Object {$_.LastLogon -match "(\d{14})"} | 
+            Foreach-Object { New-Object PSObject -Property @{ Name=$_.Name;LastLogon=[datetime]::ParseExact($matches[0], "yyyyMMddHHmmss", $null)}}
+
+
+           
+            Write-PodeJsonResponse -Value @{
+                computerDetails = $computerDetails
+             }
+         #}
+        # else {
+         #    Write-Host "cookie is not set, redirecting to login page"
+         #    Write-PodeJsonResponse -Value @{ computerDetails  = 'null'; }
+        # }
+    }
+
+
+
 }
 
 function Get-UserAuth {

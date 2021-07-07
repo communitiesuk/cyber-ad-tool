@@ -40,7 +40,7 @@
 								'<th scope="col" class="govuk-table__header">Select</th>';
 							htmlOutput += '</tr></thead>';
 
-							const groupCount = result['groups'].length;
+							groupCount = result['groups'].length;
 							for (let index = 0; index < groupCount; index++) {
 								htmlOutput += '<tr class="govuk-table__row">';
 								const groupName = result['groups'][index]['Groupname'];
