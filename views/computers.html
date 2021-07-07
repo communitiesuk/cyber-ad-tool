@@ -77,7 +77,7 @@
 							'<th scope="col" class="govuk-table__header">Operating System</th>';
 						htmlOutput += '</tr></thead>';
 
-						const userDetails = [userDetails = 'computerName', 'logon',
+						userDetails = [userDetails = 'computerName', 'logon',
 							'distinguishedName', 'objectGuid', 'badLogonCount', 'created',
 							'deleted', 'enabled', 'lockedOut', 'passwordLastSet',
 							'passwordExpired', 'passwordNeverExpires', 'IPv4Address',
@@ -88,6 +88,10 @@
 						for (let index = 0; index < result['computers'].length; index++) {
 							const userName = result['computers'][index]['ComputerName'];
 							const logon = parseDate(result['computers'][index]['LastLogonDate'])
+							
+							const LastLogonUserName = result['computers'][index]['LastLogonUserName'];
+							const LastLogonUserDate = parseDate(result['computers'][index]['LastLogonUserDate'])
+							
 							const username = result['computers'][index]['ComputerName'];
 							const memberOf = result['computers'][index]['MemberOf'];
 							const dn = result['computers'][index]['DistinguishedName'];
@@ -142,6 +146,11 @@
 							htmlOutput += `<li><b>LastLogonDate</b>: ${logon}</li>`;
 							htmlOutput +=
 								`<li><b>Member of</b>: ${result['computers'][index]['MemberOf']}</li>`;
+								
+							htmlOutput += `<li><b>Last Logged On User</b>: ${LastLogonUserName} <b>at</b> ${LastLogonUserDate}</li>`;
+							
+								
+							
 							htmlOutput += '</ul>';
 							htmlOutput += '</div>';
 							htmlOutput += '</details>';
@@ -151,6 +160,9 @@
 								`</td><td class='govuk-table__cell'>${distinguishedName}</td>`;
 							htmlOutput +=
 								`</td><td class='govuk-table__cell'>${OperatingSystem}, ${OperatingSystemVersion}</td>`;
+								
+							
+	
 							htmlOutput += '</tr>';
 
 							const userObj = [userName, logon, distinguishedName, objectGuid,
