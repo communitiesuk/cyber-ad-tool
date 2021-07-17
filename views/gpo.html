@@ -57,7 +57,7 @@
 					url: `report/gpo/${$('#reportSelect').val()}/${$('#daysSelect').val()}`,
 					dataType: 'json',
 					success: function (result, status, xhr) {
-						if (result['computers'] === 'null') {
+						if (result['gpo'] === 'null') {
 							window.location.replace('/');
 						}
 
