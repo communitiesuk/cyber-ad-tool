@@ -99,6 +99,9 @@
             }
           });
         }
+		else {
+			alert ('using localcreds')
+		}
       });
 
       $('#domainSelectButton').click(function () {
@@ -132,11 +135,19 @@
       });
 
       function validate() {
-        let errorMessage = '';
-        if ($('#groupSelect').val() == 'Select') {
-          errorMessage += '► Select Group';
+        let localcreds = '';
+        //if ($('#groupSelect').val() == 'Select') {
+        //  errorMessage += '► Select Group';
+        //}
+		if ($('#localcreds').is(':checked')) {
+		  alert('selected');
+          localcreds = 'true';
         }
-        return errorMessage;
+        return localcreds;
+		
+		
+		
+		
       }
     });
   </script>
@@ -228,8 +239,30 @@
         <label class="govuk-label" for="hostname">
           Hostname or IP Address of Domain Controller
         </label>
-        <input class="govuk-input govuk-input--width-10" id="hostname" name="hostname" type="text"></div>
+        <input class="govuk-input govuk-input--width-10" id="hostname" name="hostname" type="text">
+	  </div>
     </fieldset>
+
+	
+	
+<!--
+
+
+    <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+      <div class="govuk-checkboxes__item">
+        <input class="govuk-checkboxes__input" id="localcreds" name="localcreds" type="checkbox" value="selected" aria-describedby="localcreds-item-hint">
+        <label class="govuk-label govuk-checkboxes__label" for="localcreds">
+          Use local credentials
+        </label>
+        <div id="localcreds-item-hint" class="govuk-hint govuk-checkboxes__hint">
+          uses the credentials of the user logged on locally and associated Domain Controller 
+        </div>
+      </div>
+    </div>
+
+ -->
+
+
 
     <button id="submit" class="govuk-button" data-module="govuk-button">
       Login
