@@ -54,7 +54,7 @@
 
 				$.ajax({
 					type: 'GET',
-					url: `report/computers/${$('#reportSelect').val()}/${$('#daysSelect').val()}/${$('#ouSelect').val()}/${$('#quickQuery').is(':checked')}`,
+					url: `report/computers/${$('#reportSelect').val()}/${$('#daysSelect').val()}/${$('#ouSelect').val()}/${$('#quickQuery').is(':checked')}/${$('#search').val()}`,
 					dataType: 'json',
 					success: function (result, status, xhr) {
 						if (result['computers'] === 'null') {
@@ -305,6 +305,13 @@
 			Days to filter on
 		</label>
 		<input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="90">
+	</div>
+	
+	<div class="govuk-form-group">
+		<label class="govuk-label" for="search">
+		Search for
+		</label>
+		<input class="govuk-input govuk-input--width-20" id="search" name="search" type="text" value="*">
 	</div>
 
 	<div class="govuk-form-group">

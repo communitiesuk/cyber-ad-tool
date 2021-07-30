@@ -389,7 +389,7 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
         
     }
 	
-    Add-PodeRoute -Method Get -Path '/report/:reportName/:daysFilter/:quickQuery' -ScriptBlock {
+    Add-PodeRoute -Method Get -Path '/report/:reportName/:daysFilter/:quickQuery/:search' -ScriptBlock {
         #$Views = $WebEvent.Session.Data.username
 
         #Write-Host "views = $views"
@@ -438,10 +438,12 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
                     $reportName = $WebEvent.Parameters['reportName']
                     $daysFilter = $WebEvent.Parameters['daysFilter']
                     $quickQuery = $WebEvent.Parameters['quickQuery']
+                    $search     = $WebEvent.Parameters['search']
                     Write-Host "Quick Query: $($quickQuery)"
                     Write-Host "Report name is: $($reportName)"
+                    Write-Host "Search: $($search)"
                 
-                    $UserList = Get-Filter $reportName $daysFilter $psCred $hostname
+                    $UserList = Get-Filter $reportName $daysFilter $psCred $hostname $search
                     $users = @()
                     foreach ($user in $UserList) {
                         if ($user.objectClass -eq "user") {
@@ -497,7 +499,7 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
 
     
 
-    Add-PodeRoute -Method Get -Path '/report/computers/:reportName/:daysFilter/:ou/:quickQuery' -ScriptBlock {
+    Add-PodeRoute -Method Get -Path '/report/computers/:reportName/:daysFilter/:ou/:quickQuery/:search' -ScriptBlock {
          #Wif (Test-PodeCookie -Name 'password') {
         if (Check-Auth) {
             Debug-Log "computers: user is logged in"
@@ -506,12 +508,13 @@ Send-MailMessage -From 'AD Reporting Tool <$($fromEmailAddress)>' -To 'AD Report
                 $reportName = $WebEvent.Parameters['reportName']
                 $daysFilter = $WebEvent.Parameters['daysFilter']
                 $ou = $WebEvent.Parameters['ou']
+                $search = $WebEvent.Parameters['search']
                 $quickQuery = $WebEvent.Parameters['quickQuery']
                 #Write-Host "OU: $($ou)"
                 #Write-Host "Quick Query: $($quickQuery)"
                 $psCred = Get-UserAuth
                 $hostname = Get-Hostname
-                $ComputerList = Get-Filter $reportName $daysFilter $psCred $hostname $ou
+                $ComputerList = Get-Filter $reportName $daysFilter $psCred $hostname $search $ou
                 $queryLoopStart = (Get-Date)
                 $computers = @()
                 foreach ($computer in $ComputerList) {
@@ -764,6 +767,8 @@ function Get-Filter {
         [Parameter(Mandatory = $true, Position = 3)]
         [string] $hostname,
         [Parameter(Mandatory = $false, Position = 4)]
+        [string] $search,
+        [Parameter(Mandatory = $false, Position = 5)]
         [string] $ou
     )
 
@@ -783,6 +788,20 @@ function Get-Filter {
         else {
             $searchBase = $ou
         }
+        if ($search -eq "*") {
+            $searchString = 'Name -like"*"'
+            
+           
+        }
+        else {
+             $searchString = "Name -like '*$search*'"
+        }
+             
+             
+             
+        Debug-Log " Search String :  $searchString"
+
+
     }
     catch { 
         Debug-Log " error retreiving domain"
@@ -798,8 +817,8 @@ function Get-Filter {
     if ($userObj -eq "null") {
        
         $filter = switch ($report) {
-            "All Users" { Get-ADUser -properties * -Filter * | sort-object name }
-            "Users Never Logged On" { Get-ADUser -properties * -Filter '-not ( lastlogontimestamp -like "*")' }
+            "All Users" { Get-ADUser -properties * -Filter  $searchString | sort-object name }
+            "Users Never Logged On" { Get-ADUser -properties * -Filter '-not ( lastlogontimestamp -like "*") -and ' $searchString }
             "Users Not Recently Logged On" { Get-ADUser -properties * -Filter 'lastlogondate -notlike "*" -OR lastlogondate -le $daysOffset' }
             "Locked Out Users" { Search-ADAccount -LockedOut  }
             "Disabled Users" { Search-ADAccount -AccountDisabled  }
@@ -825,11 +844,25 @@ function Get-Filter {
         }
     }
     else {
+
         
         $filter = switch ($report) {
-            "All Users" { Get-ADUser -properties * -Filter * -Credential $userObj -Server $hostname | sort-object name }
-            "Users Never Logged On" { Get-ADUser -properties * -Filter '-not ( lastlogontimestamp -like "*")' -Credential $userObj -Server $hostname }
-            "Users Not Recently Logged On" { Get-ADUser -properties * -Filter 'lastlogondate -notlike "*" -OR lastlogondate -le $daysOffset' -Credential $userObj -Server $hostname }
+            "All Users"  {  $query =  $searchString }
+            "Users Never Logged On" {  $query = '-not ( lastlogontimestamp -like "*")' + '-and ' + $searchString }
+            "Users Not Recently Logged On" { $query = '(lastlogondate -notlike "*" -OR lastlogondate -le $daysOffset)' + '-and ' + $searchString }
+            "All Computers"  {  $query =  $searchString }
+            "Computers Not Recently Logged On" { $query = 'LastLogonTimeStamp -lt $daysOffset' + '-and ' + $searchString }
+            "Recently Created Computers" { $query = 'created -ge $daysOffset'  + '-and ' + $searchString }
+        }
+
+        Debug-Log " Query : $($query)"
+       
+
+
+        $filter = switch ($report) {
+            "All Users" { Get-ADUser -properties * -Filter $query -Credential $userObj -Server $hostname | sort-object name }
+            "Users Never Logged On" { Get-ADUser -properties * -Filter $query -Credential $userObj -Server $hostname }
+            "Users Not Recently Logged On" { Get-ADUser -properties * -Filter $query -Credential $userObj -Server $hostname }
             "Locked Out Users" { Search-ADAccount -LockedOut -Credential $userObj -Server $hostname }
             "Disabled Users" { Search-ADAccount -AccountDisabled -Credential $userObj -Server $hostname }
             "Recently Created Users" { Get-ADUser -properties * -Filter 'created -ge $daysOffset' -Credential $userObj -Server $hostname }
@@ -847,12 +880,13 @@ function Get-Filter {
             "Dial in allowed users" { Get-ADUser -properties * -Filter *  -Credential $userObj -Server $hostname | Where-Object { $_.msNPAllowDialin -eq $true } }
             "Users with non restricted logon times" { Get-ADUser -properties logonHours  -Filter *  -Credential $userObj -Server $hostname | Where-Object { $null -eq $_.logonHours } }
             "Admin users with expired passwords" { get-ADGroup -Credential $userObj -Server $hostname -Filter "Name -like '*Admin*'"  | Get-ADGroupMember -Credential $userObj -Server $hostname | Where-Object { $_.objectClass -eq "user" } | Get-ADUser -properties PasswordExpired -Credential $userObj -Server $hostname | Where-Object { $_.PasswordExpired -ne $false } | sort-object -unique name }
-            "All Computers" { Get-ADComputer -properties * -Filter * -SearchBase $searchBase -Credential $userObj -Server $hostname }
-            "Computers Not Recently Logged On" { Get-ADComputer -properties * -Filter { LastLogonTimeStamp -lt $daysOffset } -SearchBase $searchBase -Credential $userObj -Server $hostname }
-            "Recently Created Computers" { Get-ADComputer -properties * -Filter "created -ge $($daysOffset)" -Credential $userObj -Server $hostname }
+            "All Computers" { Get-ADComputer -properties * -Filter $query -SearchBase $searchBase -Credential $userObj -Server $hostname }
+            "Computers Not Recently Logged On" { Get-ADComputer -properties * -Filter $query -SearchBase $searchBase -Credential $userObj -Server $hostname }
+            "Recently Created Computers" { Get-ADComputer -properties * -Filter $query -Credential $userObj -Server $hostname }
             "All GPOs" { Invoke-Command -Credential $userObj  -ComputerName localhost -ScriptBlock { Get-GPO -All -Server $hostname } }
         }
-
+         
+         
     
     }
     Debug-Log " Result : $($filter)"
