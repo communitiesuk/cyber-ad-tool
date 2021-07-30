@@ -38,7 +38,7 @@
 
 				$.ajax({
 					type: 'GET',
-					url: `report/${$('#reportSelect').val()}/${$('#daysSelect').val()}/${$('#quickQuery').is(':checked')}`,
+					url: `report/${$('#reportSelect').val()}/${$('#daysSelect').val()}/${$('#quickQuery').is(':checked')}/${$('#search').val()}`,
 					dataType: 'json',
 					success: function (result, status, xhr) {
 						if (result['users'] === 'null') {
@@ -309,6 +309,14 @@
 		</label>
 		<input class="govuk-input govuk-input--width-3" id="daysSelect" name="daysSelect" type="text" value="30">
 	</div>
+
+	<div class="govuk-form-group">
+		<label class="govuk-label" for="search">
+		Search for
+		</label>
+		<input class="govuk-input govuk-input--width-20" id="search" name="search" type="text" value="*">
+	</div>
+	
 
 	<div class="govuk-form-group">
 		<div class="govuk-checkboxes">
